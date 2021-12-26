@@ -1,12 +1,207 @@
-import React from 'react'
-import { View, Text } from 'react-native'
+import React, { useEffect } from 'react'
+import { View, StyleSheet, Platform, Image } from 'react-native'
+/*NATIVE BASE */
+import { Text, Center, Input, Icon, Stack, Button, Flex, KeyboardAvoidingView, Avatar } from 'native-base';
+import globalStyles from '../../styles/global-styles';
+/* EXPO */
+import * as ImagePicker from 'expo-image-picker';
+/*FIREBASE*/
+import { getAuth, createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
+import { getFirestore, setDoc, doc } from "firebase/firestore"
+import { getStorage, uploadBytes, getDownloadURL, ref } from "firebase/storage"
+/*ICONS*/
+import { Entypo } from '@expo/vector-icons';
+import { MaterialIcons } from "@expo/vector-icons";
+import { Feather } from '@expo/vector-icons';
+import { SimpleLineIcons } from '@expo/vector-icons';
+const Register = ({ navigation }) => {
+    const [email, setEmail] = React.useState("")
+    const [password, setPassword] = React.useState("");
+    const [fullName, setFullName] = React.useState("");
+    const [showPassword, setShowPassword] = React.useState(false);
+    const [image, setImage] = React.useState(null);
+    const [firebaseImageUrl, setFirebaseImageUrl] = React.useState("")
+    const handleShowPassword = () => setShowPassword(!showPassword);
+    function registerUser() {
+        const auth = getAuth();
+        const db = getFirestore();
+        uploadPhotoToStorage(image)
+        let imageUrl = image.split("/ImagePicker/")
+        const imageReference = ref(getStorage(), 'users/' + email + '/' + imageUrl[1])
+        getDownloadURL(imageReference).then(url => {
+            setFirebaseImageUrl(url)
+        })
+        createUserWithEmailAndPassword(auth, email, password).then(userCreated => {
+            const user = userCreated.user
+            setDoc(doc(db, 'users', user.uid), {
+                name: fullName,
+                email: email,
+                profilePhoto: firebaseImageUrl
+            })
+            updateProfile(auth.currentUser, {
+                displayName: fullName,
+                photoURL: firebaseImageUrl
+            })
+        })
+    }
+    const pickImage = async () => {
+        let permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (permissionResult.granted === false) {
+            alert("Permission to access camera roll is required!");
+            return;
+        }
+        // No permissions request is necessary for launching the image library       
+        let result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ImagePicker.MediaTypeOptions.All,
+            allowsEditing: true,
+            aspect: [4, 4],
+            quality: 1,
+        });
+        if (!result.cancelled) {
+            setImage(result.uri);
+        }
+    };
 
-const Register = () => {
+    const uploadPhotoToStorage = async (uri) => {
+        const blob = await new Promise((resolve, reject) => {
+            const xhr = new XMLHttpRequest();
+            xhr.onload = function () {
+                // return the blob
+                resolve(xhr.response);
+            };
+            xhr.onerror = function () {
+                // something went wrong
+                reject(new Error('Network request failed'));
+            };
+            // this helps us get a blob
+            xhr.responseType = 'blob';
+            xhr.open('GET', uri, true);
+            xhr.send(null);
+        });
+        let imageUrl = uri.split("/ImagePicker/")
+        const refR = ref(getStorage(), 'users/' + email + '/' + imageUrl[1])
+       // const result = await uploadBytes(refR, blob)
+        blob.close();
+        return getDownloadURL(refR)
+    }
+
     return (
-        <View>
-            <Text>Desde el register</Text>
+        <View style={styles.container}>
+            <KeyboardAvoidingView behavior="padding" >
+                <Center>
+                    <View style={styles.image}>
+                        {image ?
+                            <Image source={{ uri: image }} style={styles.profileImage} />
+                            : <Avatar
+                                alignSelf="center"
+                                width="200"
+                                bg={'light.200'}
+                                height="200"
+                                onTouchStart={pickImage}
+                            >
+                                {<Text fontSize={'3xl'}>Add a photo</Text>}
+                            </Avatar>}
+                        <View style={styles.addPhotoButton}>
+                            <Button
+                                leftIcon={<Feather name="camera" size={24} color="white" />}
+                                style={{ backgroundColor: '#000' }}
+                                onPress={pickImage} />
+                        </View>
+                    </View>
+                </Center>
+                <Stack space={4} w="100%" alignItems="center" mt={5}>
+                    <Input
+                        w={{
+                            base: "80%",
+                            md: "20%",
+                        }}
+                        variant={"underlined"}
+                        type="text"
+                        placeholder="Full name"
+                        value={fullName}
+                        size="lg"
+                        onChangeText={text => setFullName(text)}
+                        InputLeftElement={<Icon
+                            as={<SimpleLineIcons name="user" />}
+                            size={5}
+                            ml={2}
+                            color="muted.400"
+                        />} />
+                    <Input
+                        w={{
+                            base: "80%",
+                            md: "20%",
+                        }}
+                        variant={"underlined"}
+                        type="text"
+                        placeholder="Email"
+                        value={email}
+                        size="lg"
+                        onChangeText={text => setEmail(text)}
+                        InputLeftElement={<Icon
+                            as={<Entypo name="email" />}
+                            size={5}
+                            ml={2}
+                            color="muted.400"
+                        />} />
+                    <Input
+                        w={{
+                            base: "80%",
+                            md: "20%",
+                        }}
+                        variant={"underlined"}
+                        type={showPassword ? "text" : "password"}
+                        placeholder="Password"
+                        value={password}
+                        size="lg"
+                        onChangeText={text => setPassword(text)}
+                        InputLeftElement={<Icon
+                            as={<Feather name="lock" />}
+                            size={5}
+                            ml={2}
+                            color="muted.400"
+                        />}
+                        InputRightElement={<Icon
+                            onPress={handleShowPassword}
+                            as={showPassword ? <MaterialIcons name="visibility" /> : <MaterialIcons name="visibility-off" />}
+                            size={5}
+                            mr={2}
+                            color="muted.400"
+                        />} />
+                    <Button colorScheme='info' w={{ base: "80%", md: "20%" }} onPress={registerUser}>
+                        Continue
+                    </Button>
+                    <Flex direction='row'>
+                        <Text color={'grey'} mr={2} >Joined us before?</Text>
+                        <Text color={'blue.600'} bold={true} onPress={() => navigation.navigate('Login')}>Login</Text>
+                    </Flex>
+                </Stack>
+            </KeyboardAvoidingView>
         </View>
+
+
     )
 }
+const styles = StyleSheet.create({
+    container: {
+        height: globalStyles.windowDimensions.height,
+        width: globalStyles.windowDimensions.width,
+        justifyContent: 'center',
+        flex: 1
+    },
+    image: {
+        position: 'relative',
+    },
+    addPhotoButton: {
+        position: 'absolute',
+        bottom: 0,
+        right: 15
+    },
+    profileImage: {
+        width: 200,
+        height: 200,
+        borderRadius: 150
+    }
 
+})
 export default Register

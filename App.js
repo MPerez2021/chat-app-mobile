@@ -1,11 +1,16 @@
+import { registerRootComponent } from 'expo';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-
 import { StyleSheet } from 'react-native';
 import Login from './screens/auth/Login';
 import Register from './screens/auth/Register';
 /*NATIVE BASE*/
 import { NativeBaseProvider } from 'native-base';
+/*FIREBASE*/
+import { initializeApp } from 'firebase/app';
+import firebaseConfig from './firebase/config';
+initializeApp(firebaseConfig)
+
 const Stack = createNativeStackNavigator();
 export default function App() {
   return (
@@ -18,7 +23,8 @@ export default function App() {
           />
           <Stack.Screen
             name='Register'
-            component={Register} />
+            component={Register}
+          />
         </Stack.Navigator>
       </NavigationContainer>
     </NativeBaseProvider>
@@ -33,3 +39,4 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
   },
 });
+registerRootComponent(App);
