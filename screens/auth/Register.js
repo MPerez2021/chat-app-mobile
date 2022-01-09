@@ -1,7 +1,8 @@
 import React, { useEffect } from 'react'
 import { View, StyleSheet, Platform, Image } from 'react-native'
+import { useFocusEffect } from '@react-navigation/core';
 /*NATIVE BASE */
-import { Text, Center, Input, Icon, Stack, Button, Flex, KeyboardAvoidingView, Avatar } from 'native-base';
+import { Text, Center, Input, Icon, Stack, Button, Flex, KeyboardAvoidingView, Avatar, FormControl } from 'native-base';
 import globalStyles from '../../styles/global-styles';
 /* EXPO */
 import * as ImagePicker from 'expo-image-picker';
@@ -20,32 +21,100 @@ const Register = ({ navigation }) => {
     const [fullName, setFullName] = React.useState("");
     const [showPassword, setShowPassword] = React.useState(false);
     const [image, setImage] = React.useState(null);
-    const [firebaseImageUrl, setFirebaseImageUrl] = React.useState("")
+    const [errors, setErrors] = React.useState({ fullName, email, password, image });
+    const [showError, setShowError] = React.useState(false)
+    const [existImageSelected, setExistImageSelected] = React.useState(false)
     const handleShowPassword = () => setShowPassword(!showPassword);
-    function registerUser() {
+
+    useFocusEffect(
+        React.useCallback(() => {
+            setEmail("");
+            setPassword("");
+            setFullName("");
+            setShowPassword(false);
+            setImage(null);
+        }, [])
+    )
+    async function registerUser() {
         const auth = getAuth();
         const db = getFirestore();
-        uploadPhotoToStorage(image)
-        let imageUrl = image.split("/ImagePicker/")
-        const imageReference = ref(getStorage(), 'users/' + email + '/' + imageUrl[1])
-        getDownloadURL(imageReference).then(url => {
-            setFirebaseImageUrl(url)
-        })
-        createUserWithEmailAndPassword(auth, email, password).then(userCreated => {
-            const user = userCreated.user
-            setDoc(doc(db, 'users', user.uid), {
-                name: fullName,
-                email: email,
-                profilePhoto: firebaseImageUrl
+        if (emptyFields()) {
+            setShowError(true)
+        } else {
+            setShowError(false)
+            var userProfilePhoto = await uploadPhotoToStorage(image)
+            createUserWithEmailAndPassword(auth, email, password).then(userCreated => {
+                const user = userCreated.user                
+                setDoc(doc(db, 'users', user.uid), {
+                    name: fullName,
+                    email: email,
+                    profilePhoto: userProfilePhoto
+                })
+                updateProfile(auth.currentUser, {
+                    displayName: fullName,
+                    photoURL: userProfilePhoto
+                })
+                resetForm();          
+            }).catch(error => {
+                console.log(error.code);
+                validateForm(error);
             })
-            updateProfile(auth.currentUser, {
-                displayName: fullName,
-                photoURL: firebaseImageUrl
-            })
-        })
+        }
     }
+
+    function emptyFields() {
+        if (fullName === "" && email === "" && password === "" && image === null) {
+            setErrors({ email: 'This field is required*', fullName: 'This field is required*', password: 'This field is required*', image: 'Please, pick an image*' })
+        } else if (fullName === "" && email === "") {
+            setErrors({ email: 'This field is required*', fullName: 'This field is required*' })
+        }
+        else if (fullName === "" && password === "") {
+            setErrors({ fullName: 'This field is required*', password: 'This field is required*' })
+        } else if (email === "" && password === "") {
+            setErrors({ email: 'This field is required*', password: 'This field is required*' })
+        } else if (email === "") {
+            setErrors({ email: 'This field is required*' })
+        } else if (fullName === "") {
+            setErrors({ fullName: 'This field is required*' })
+        } else if (password === "") {
+            setErrors({ password: 'This field is required*' })
+        } else if (image === null) {
+            setErrors({ image: 'Please, pick an image*' })
+        } else {
+            return false
+        }
+        return true
+    }
+
+
+    function validateForm(error) {
+        switch (error.code) {
+            case 'auth/invalid-email':
+                setErrors({ email: 'Try again with a valid email direction' })
+                setShowError(true)
+                break;
+            case 'auth/internal-error':
+
+                break;
+            case 'auth/missing-email':
+                setErrors({ email: 'This field is required*' })
+                setShowError(true)
+                break;
+            case 'auth/email-already-in-use':
+                setErrors({ email: 'This email is already in use"' })
+                setShowError(true)
+                break;
+            case 'auth/weak-password':
+                setErrors({ password: 'Password should be at least 6 characters' })
+                setShowError(true)
+            default:
+                break;
+        }
+
+    }
+
     const pickImage = async () => {
-        let permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        let permissionResult = ImagePicker.requestMediaLibraryPermissionsAsync();
         if (permissionResult.granted === false) {
             alert("Permission to access camera roll is required!");
             return;
@@ -59,6 +128,7 @@ const Register = ({ navigation }) => {
         });
         if (!result.cancelled) {
             setImage(result.uri);
+            //setExistImageSelected(true)
         }
     };
 
@@ -80,104 +150,141 @@ const Register = ({ navigation }) => {
         });
         let imageUrl = uri.split("/ImagePicker/")
         const refR = ref(getStorage(), 'users/' + email + '/' + imageUrl[1])
-       // const result = await uploadBytes(refR, blob)
+        const result = await uploadBytes(refR, blob)
         blob.close();
         return getDownloadURL(refR)
     }
 
+    function resetForm() {
+        setEmail("");
+        setPassword("");
+        setFullName("");
+        setShowPassword(false);
+        setImage(null);
+        setShowError(false);
+    }
     return (
         <View style={styles.container}>
             <KeyboardAvoidingView behavior="padding" >
-                <Center>
-                    <View style={styles.image}>
-                        {image ?
-                            <Image source={{ uri: image }} style={styles.profileImage} />
-                            : <Avatar
-                                alignSelf="center"
-                                width="200"
-                                bg={'light.200'}
-                                height="200"
-                                onTouchStart={pickImage}
-                            >
-                                {<Text fontSize={'3xl'}>Add a photo</Text>}
-                            </Avatar>}
-                        <View style={styles.addPhotoButton}>
-                            <Button
-                                leftIcon={<Feather name="camera" size={24} color="white" />}
-                                style={{ backgroundColor: '#000' }}
-                                onPress={pickImage} />
+                <FormControl isRequired isInvalid={showError}>
+                    <Center>
+                        <View style={styles.image}>
+                            {image ?
+                                <Image source={{ uri: image }} style={styles.profileImage} />
+                                : <Avatar
+                                    alignSelf="center"
+                                    width="200"
+                                    bg={'light.200'}
+                                    height="200"
+                                    onTouchStart={pickImage}
+                                >
+                                    {<Text fontSize={'3xl'}>Add a photo</Text>}
+                                </Avatar>}
+                            <View style={styles.addPhotoButton}>
+                                <Button
+                                    leftIcon={<Feather name="camera" size={24} color="white" />}
+                                    style={{ backgroundColor: '#000' }}
+                                    onPress={pickImage} />
+                            </View>
                         </View>
-                    </View>
-                </Center>
-                <Stack space={4} w="100%" alignItems="center" mt={5}>
-                    <Input
-                        w={{
-                            base: "80%",
-                            md: "20%",
-                        }}
-                        variant={"underlined"}
-                        type="text"
-                        placeholder="Full name"
-                        value={fullName}
-                        size="lg"
-                        onChangeText={text => setFullName(text)}
-                        InputLeftElement={<Icon
-                            as={<SimpleLineIcons name="user" />}
-                            size={5}
-                            ml={2}
-                            color="muted.400"
-                        />} />
-                    <Input
-                        w={{
-                            base: "80%",
-                            md: "20%",
-                        }}
-                        variant={"underlined"}
-                        type="text"
-                        placeholder="Email"
-                        value={email}
-                        size="lg"
-                        onChangeText={text => setEmail(text)}
-                        InputLeftElement={<Icon
-                            as={<Entypo name="email" />}
-                            size={5}
-                            ml={2}
-                            color="muted.400"
-                        />} />
-                    <Input
-                        w={{
-                            base: "80%",
-                            md: "20%",
-                        }}
-                        variant={"underlined"}
-                        type={showPassword ? "text" : "password"}
-                        placeholder="Password"
-                        value={password}
-                        size="lg"
-                        onChangeText={text => setPassword(text)}
-                        InputLeftElement={<Icon
-                            as={<Feather name="lock" />}
-                            size={5}
-                            ml={2}
-                            color="muted.400"
-                        />}
-                        InputRightElement={<Icon
-                            onPress={handleShowPassword}
-                            as={showPassword ? <MaterialIcons name="visibility" /> : <MaterialIcons name="visibility-off" />}
-                            size={5}
-                            mr={2}
-                            color="muted.400"
-                        />} />
-                    <Button colorScheme='info' w={{ base: "80%", md: "20%" }} onPress={registerUser}>
-                        Continue
-                    </Button>
-                    <Flex direction='row'>
-                        <Text color={'grey'} mr={2} >Joined us before?</Text>
-                        <Text color={'blue.600'} bold={true} onPress={() => navigation.navigate('Login')}>Login</Text>
-                    </Flex>
-                </Stack>
+                        {showError ?
+                            <FormControl.ErrorMessage _text={{ fontSize: 'xs', color: 'error.500', fontWeight: 500 }} >
+                                {errors.image}
+                            </FormControl.ErrorMessage>
+                            : null}
+                    </Center>
+
+                    <Stack space={4} w="100%" alignItems="center" mt={5}>
+                        <View>
+                            <Input
+                                w={{
+                                    base: "80%",
+                                    md: "20%",
+                                }}
+                                variant={"underlined"}
+                                type="text"
+                                placeholder="Full name"
+                                value={fullName}
+                                size="lg"
+                                onChangeText={text => setFullName(text)}
+                                InputLeftElement={<Icon
+                                    as={<SimpleLineIcons name="user" />}
+                                    size={5}
+                                    ml={2}
+                                    color="muted.400"
+                                />} />
+                            {showError ?
+                                <FormControl.ErrorMessage _text={{ fontSize: 'xs', color: 'error.500', fontWeight: 500 }} >
+                                    {errors.fullName}
+                                </FormControl.ErrorMessage>
+                                : null}
+                        </View>
+                        <View>
+                            <Input
+                                w={{
+                                    base: "80%",
+                                    md: "20%",
+                                }}
+                                variant={"underlined"}
+                                type="text"
+                                placeholder="Email"
+                                value={email}
+                                size="lg"
+                                onChangeText={text => setEmail(text)}
+                                InputLeftElement={<Icon
+                                    as={<Entypo name="email" />}
+                                    size={5}
+                                    ml={2}
+                                    color="muted.400"
+                                />} />
+                            {showError ?
+                                <FormControl.ErrorMessage _text={{ fontSize: 'xs', color: 'error.500', fontWeight: 500 }} >
+                                    {errors.email}
+                                </FormControl.ErrorMessage>
+                                : null}
+                        </View>
+                        <View>
+                            <Input
+                                w={{
+                                    base: "80%",
+                                    md: "20%",
+                                }}
+                                variant={"underlined"}
+                                type={showPassword ? "text" : "password"}
+                                placeholder="Password"
+                                value={password}
+                                size="lg"
+                                onChangeText={text => setPassword(text)}
+                                InputLeftElement={<Icon
+                                    as={<Feather name="lock" />}
+                                    size={5}
+                                    ml={2}
+                                    color="muted.400"
+                                />}
+                                InputRightElement={<Icon
+                                    onPress={handleShowPassword}
+                                    as={showPassword ? <MaterialIcons name="visibility" /> : <MaterialIcons name="visibility-off" />}
+                                    size={5}
+                                    mr={2}
+                                    color="muted.400"
+                                />} />
+                            {showError ?
+                                <FormControl.ErrorMessage _text={{ fontSize: 'xs', color: 'error.500', fontWeight: 500 }} >
+                                    {errors.password}
+                                </FormControl.ErrorMessage>
+                                : null}
+                        </View>
+                        <Button colorScheme='info' w={{ base: "80%", md: "20%" }} onPress={registerUser}>
+                            Continue
+                        </Button>
+                        <Flex direction='row'>
+                            <Text color={'grey'} mr={2} >Joined us before?</Text>
+                            <Text color={'blue.600'} bold={true} onPress={() => navigation.navigate('Login')}>Login</Text>
+                        </Flex>
+                    </Stack>
+                </FormControl>
             </KeyboardAvoidingView>
-        </View>
+        </View >
 
 
     )
