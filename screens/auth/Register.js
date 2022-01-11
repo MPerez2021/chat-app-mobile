@@ -2,7 +2,7 @@ import React, { useEffect } from 'react'
 import { View, StyleSheet, Platform, Image } from 'react-native'
 import { useFocusEffect } from '@react-navigation/core';
 /*NATIVE BASE */
-import { Text, Center, Input, Icon, Stack, Button, Flex, KeyboardAvoidingView, Avatar, FormControl } from 'native-base';
+import { Text, Center, Input, Icon, Stack, Button, Flex, KeyboardAvoidingView, Avatar, FormControl, Modal, HStack } from 'native-base';
 import globalStyles from '../../styles/global-styles';
 /* EXPO */
 import * as ImagePicker from 'expo-image-picker';
@@ -15,6 +15,7 @@ import { Entypo } from '@expo/vector-icons';
 import { MaterialIcons } from "@expo/vector-icons";
 import { Feather } from '@expo/vector-icons';
 import { SimpleLineIcons } from '@expo/vector-icons';
+import { AntDesign } from '@expo/vector-icons';
 const Register = ({ navigation }) => {
     const [email, setEmail] = React.useState("")
     const [password, setPassword] = React.useState("");
@@ -23,7 +24,8 @@ const Register = ({ navigation }) => {
     const [image, setImage] = React.useState(null);
     const [errors, setErrors] = React.useState({ fullName, email, password, image });
     const [showError, setShowError] = React.useState(false)
-    const [existImageSelected, setExistImageSelected] = React.useState(false)
+    const [showModal, setShowModal] = React.useState(false)
+    const [isLoading, setIsLoading] = React.useState(false)
     const handleShowPassword = () => setShowPassword(!showPassword);
 
     useFocusEffect(
@@ -35,36 +37,48 @@ const Register = ({ navigation }) => {
             setImage(null);
         }, [])
     )
-    async function registerUser() {
+    function registerUser() {
+        setIsLoading(true)
         const auth = getAuth();
         const db = getFirestore();
         if (emptyFields()) {
             setShowError(true)
         } else {
             setShowError(false)
-            var userProfilePhoto = await uploadPhotoToStorage(image)
+            //var userProfilePhoto = await uploadPhotoToStorage(image)
             createUserWithEmailAndPassword(auth, email, password).then(userCreated => {
-                const user = userCreated.user                
-                setDoc(doc(db, 'users', user.uid), {
-                    name: fullName,
-                    email: email,
-                    profilePhoto: userProfilePhoto
+                getImageUrlandUpdateToStorage().then(userProfilePhoto => {
+                    const user = userCreated.user
+                    setDoc(doc(db, 'users', user.uid), {
+                        name: fullName,
+                        email: email,
+                        profilePhoto: userProfilePhoto
+                    }, { merge: true })
+                    updateProfile(auth.currentUser, {
+                        displayName: fullName,
+                        photoURL: data
+                    })
                 })
-                updateProfile(auth.currentUser, {
-                    displayName: fullName,
-                    photoURL: userProfilePhoto
-                })
-                resetForm();          
+                setIsLoading(false)
+                setShowModal(true)
+                //resetForm();
             }).catch(error => {
                 console.log(error.code);
+                setIsLoading(false)
                 validateForm(error);
             })
+
         }
+    }
+    async function getImageUrlandUpdateToStorage() {
+        return await uploadPhotoToStorage(image)
     }
 
     function emptyFields() {
         if (fullName === "" && email === "" && password === "" && image === null) {
             setErrors({ email: 'This field is required*', fullName: 'This field is required*', password: 'This field is required*', image: 'Please, pick an image*' })
+        } else if (fullName === "" && email === "" && password === "") {
+            setErrors({ email: 'This field is required*', fullName: 'This field is required*', password: 'This field is required*' })
         } else if (fullName === "" && email === "") {
             setErrors({ email: 'This field is required*', fullName: 'This field is required*' })
         }
@@ -128,7 +142,6 @@ const Register = ({ navigation }) => {
         });
         if (!result.cancelled) {
             setImage(result.uri);
-            //setExistImageSelected(true)
         }
     };
 
@@ -283,6 +296,39 @@ const Register = ({ navigation }) => {
                         </Flex>
                     </Stack>
                 </FormControl>
+                <Modal isOpen={showModal} onClose={() => setShowModal(false)} size={"lg"}>
+                    <Modal.Content >
+                        <Modal.CloseButton />
+                        <Modal.Body>
+                            <HStack alignItems={"center"} mt={3}>
+                                <AntDesign name="checkcircleo" size={24} color="white" style={{ backgroundColor: '#20a779', borderRadius: 50, marginRight: 5 }} />
+                                <Text fontSize="md" pt={3} pr={3} pb={3}>User {fullName}, register successfully, please login to continue.</Text>
+                            </HStack>
+
+                            <Button.Group space={1} justifyContent={"flex-end"}>
+                                <Button
+                                    variant="ghost"
+                                    colorScheme="blueGray"
+                                    onPress={() => {
+                                        setShowModal(false)
+                                    }}
+                                >
+                                    Cancel
+                                </Button>
+                                <Button
+                                    colorScheme='blue'
+                                    endIcon={<AntDesign name="arrowright" size={15} color="white" />}
+                                    onPress={() => {
+                                        navigation.navigate("Login")
+                                        setShowModal(false)
+                                    }}
+                                >
+                                    Log In
+                                </Button>
+                            </Button.Group>
+                        </Modal.Body>
+                    </Modal.Content>
+                </Modal>
             </KeyboardAvoidingView>
         </View >
 
