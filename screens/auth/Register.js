@@ -1,8 +1,8 @@
-import React, { useEffect } from 'react'
+import React from 'react'
 import { View, StyleSheet, Platform, Image } from 'react-native'
 import { useFocusEffect } from '@react-navigation/core';
 /*NATIVE BASE */
-import { Text, Center, Input, Icon, Stack, Button, Flex, KeyboardAvoidingView, Avatar, FormControl, Modal, HStack } from 'native-base';
+import { Text, Center, Input, Icon, Stack, Button, Flex, KeyboardAvoidingView, Avatar, FormControl, Modal, HStack, Spinner } from 'native-base';
 import globalStyles from '../../styles/global-styles';
 /* EXPO */
 import * as ImagePicker from 'expo-image-picker';
@@ -35,6 +35,7 @@ const Register = ({ navigation }) => {
             setFullName("");
             setShowPassword(false);
             setImage(null);
+            setIsLoading(false);
         }, [])
     )
     function registerUser() {
@@ -43,6 +44,7 @@ const Register = ({ navigation }) => {
         const db = getFirestore();
         if (emptyFields()) {
             setShowError(true)
+            setIsLoading(false)
         } else {
             setShowError(false)
             //var userProfilePhoto = await uploadPhotoToStorage(image)
@@ -56,12 +58,11 @@ const Register = ({ navigation }) => {
                     }, { merge: true })
                     updateProfile(auth.currentUser, {
                         displayName: fullName,
-                        photoURL: data
+                        photoURL: userProfilePhoto
                     })
-                })
+                })               
                 setIsLoading(false)
                 setShowModal(true)
-                //resetForm();
             }).catch(error => {
                 console.log(error.code);
                 setIsLoading(false)
@@ -81,8 +82,7 @@ const Register = ({ navigation }) => {
             setErrors({ email: 'This field is required*', fullName: 'This field is required*', password: 'This field is required*' })
         } else if (fullName === "" && email === "") {
             setErrors({ email: 'This field is required*', fullName: 'This field is required*' })
-        }
-        else if (fullName === "" && password === "") {
+        } else if (fullName === "" && password === "") {
             setErrors({ fullName: 'This field is required*', password: 'This field is required*' })
         } else if (email === "" && password === "") {
             setErrors({ email: 'This field is required*', password: 'This field is required*' })
@@ -168,17 +168,9 @@ const Register = ({ navigation }) => {
         return getDownloadURL(refR)
     }
 
-    function resetForm() {
-        setEmail("");
-        setPassword("");
-        setFullName("");
-        setShowPassword(false);
-        setImage(null);
-        setShowError(false);
-    }
     return (
         <View style={styles.container}>
-            <KeyboardAvoidingView behavior="padding" >
+            <KeyboardAvoidingView behavior="padding">
                 <FormControl isRequired isInvalid={showError}>
                     <Center>
                         <View style={styles.image}>
@@ -287,16 +279,17 @@ const Register = ({ navigation }) => {
                                 </FormControl.ErrorMessage>
                                 : null}
                         </View>
-                        <Button colorScheme='info' w={{ base: "80%", md: "20%" }} onPress={registerUser}>
+                        {isLoading ? <Spinner size="sm" /> : <Button colorScheme='info' w={{ base: "80%", md: "20%" }} onPress={registerUser}>
                             Continue
-                        </Button>
+                        </Button>}
+
                         <Flex direction='row'>
                             <Text color={'grey'} mr={2} >Joined us before?</Text>
                             <Text color={'blue.600'} bold={true} onPress={() => navigation.navigate('Login')}>Login</Text>
                         </Flex>
                     </Stack>
                 </FormControl>
-                <Modal isOpen={showModal} onClose={() => setShowModal(false)} size={"lg"}>
+                <Modal isOpen={showModal} onClose={() => setShowModal(false)} size={"lg"} closeOnOverlayClick={false}>
                     <Modal.Content >
                         <Modal.CloseButton />
                         <Modal.Body>
@@ -304,7 +297,6 @@ const Register = ({ navigation }) => {
                                 <AntDesign name="checkcircleo" size={24} color="white" style={{ backgroundColor: '#20a779', borderRadius: 50, marginRight: 5 }} />
                                 <Text fontSize="md" pt={3} pr={3} pb={3}>User {fullName}, register successfully, please login to continue.</Text>
                             </HStack>
-
                             <Button.Group space={1} justifyContent={"flex-end"}>
                                 <Button
                                     variant="ghost"

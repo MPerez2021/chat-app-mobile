@@ -1,30 +1,69 @@
+import React, { useEffect } from 'react';
 import { registerRootComponent } from 'expo';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { StyleSheet } from 'react-native';
 import Login from './screens/auth/Login';
 import Register from './screens/auth/Register';
+import Chat from './components/Chat';
 /*NATIVE BASE*/
 import { NativeBaseProvider } from 'native-base';
+import { Icon } from 'native-base';
+import { Entypo } from '@expo/vector-icons';
 /*FIREBASE*/
 import { initializeApp } from 'firebase/app';
 import firebaseConfig from './firebase/config';
-initializeApp(firebaseConfig)
+import { getAuth, onAuthStateChanged, signOut } from 'firebase/auth'
+import Home from './screens/Home/Home';
 
+initializeApp(firebaseConfig)
 const Stack = createNativeStackNavigator();
+
+
+function logOut() {
+  const auth = getAuth()
+  signOut(auth)
+}
 export default function App() {
+  const [userLogged, setUserLogged] = React.useState(false)
+  const auth = getAuth()
+  useEffect(() => {
+    const verifyIfUserExists = onAuthStateChanged(auth, user => {
+      if (user) {
+        setUserLogged(true)
+      } else {
+        setUserLogged(false)
+      }
+    })
+    return () => {
+      verifyIfUserExists()
+    }
+  }, [])
   return (
     <NativeBaseProvider>
       <NavigationContainer>
         <Stack.Navigator>
-          <Stack.Screen
-            name='Login'
-            component={Login}
-          />
-          <Stack.Screen
-            name='Register'
-            component={Register}
-          />
+          {!userLogged ? <Stack.Group>
+            <Stack.Screen
+              name='Login'
+              component={Login}
+            />
+            <Stack.Screen
+              name='Register'
+              component={Register}
+            />
+          </Stack.Group> :
+            <Stack.Group>
+              <Stack.Screen name='Messages'
+                component={Home}
+                options={{
+                  headerRight: () => <Icon as={Entypo} name="log-out" onPress={logOut} />,
+                  headerLeft: () => false
+                }} />
+              <Stack.Screen name='Chat' component={Chat}/>
+            </Stack.Group>}
+
+
         </Stack.Navigator>
       </NavigationContainer>
     </NativeBaseProvider>
