@@ -15,6 +15,7 @@ import { initializeApp } from 'firebase/app';
 import firebaseConfig from './firebase/config';
 import { getAuth, onAuthStateChanged, signOut } from 'firebase/auth'
 import Home from './screens/Home/Home';
+import AllUsers from './screens/Home/User/AllUsers';
 
 initializeApp(firebaseConfig)
 const Stack = createNativeStackNavigator();
@@ -61,6 +62,7 @@ export default function App() {
                   headerLeft: () => false
                 }} />
               <Stack.Screen name='Chat' component={Chat}/>
+              <Stack.Screen name='Users' component={AllUsers}/>
             </Stack.Group>}
 
 

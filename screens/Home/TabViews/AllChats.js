@@ -1,7 +1,7 @@
 import React from 'react'
 import { View, StyleSheet, FlatList, TouchableHighlight } from 'react-native'
 /*NATIVE BASE */
-import { HStack, Text, Avatar, VStack, Stack, Badge, Divider } from 'native-base'
+import { HStack, Text, Avatar, VStack, Stack, Badge, Divider, Button } from 'native-base'
 /* STYLES */
 import globalStyles from '../../../styles/global-styles'
 const AllChats = ({ props }) => {
@@ -37,6 +37,7 @@ const AllChats = ({ props }) => {
     ]
     return (
         <View style={styles.container}>
+            <Button onPress={()=> props.navigate('Users')}> todos los usuarios </Button>
             <FlatList data={hola}
                 renderItem={({ item }) =>
                     <TouchableHighlight onPress={() => props.navigate('Chat')}>
