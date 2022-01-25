@@ -47,7 +47,7 @@ export default function App() {
           {!userLogged ? <Stack.Group>
             <Stack.Screen
               name='Login'
-              component={Login}
+              component={Login}             
             />
             <Stack.Screen
               name='Register'

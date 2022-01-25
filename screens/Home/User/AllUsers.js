@@ -6,6 +6,7 @@ import { HStack, Text, Avatar, VStack, Stack, Badge, Divider, Button } from 'nat
 /*FIREBASE */
 import { collection, query, getFirestore, onSnapshot, setDoc, doc, getDoc } from "firebase/firestore";
 import { getAuth } from 'firebase/auth';
+import UserAvatar from '../../../components/UserAvatar';
 
 const AllUsers = ({ navigation }) => {
     const db = getFirestore()
@@ -31,12 +32,13 @@ const AllUsers = ({ navigation }) => {
         };
     }, []);
 
-    async function createNewChat(friendId, name) {    
+    async function createNewChat(friendId, name) {
         const user = auth.currentUser
-        navigation.navigate('Chat',{
+        navigation.navigate('Chat', {
             friendId: friendId,
             friendName: name,
-            actualUserUid: user.uid
+            actualUserUid: user.uid,
+            profilePhoto: user.photoURL
         })
 
     }
@@ -50,14 +52,7 @@ const AllUsers = ({ navigation }) => {
                                 <View>
                                     <Stack bg="white" direction={'row'} padding={4}>
                                         <Stack alignSelf={'center'} width={'15%'}>
-                                            <Avatar
-                                                alignContent="center"
-                                                size="md"
-                                                source={{
-                                                    uri: user.photo
-                                                }}
-                                                mr={3}
-                                            />
+                                            <UserAvatar size='md' source={user.photo} marginRight={3} />
                                         </Stack>
                                         <VStack width={'85%'}>
                                             <Text fontSize="lg">{user.name}</Text>

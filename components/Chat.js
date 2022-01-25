@@ -1,58 +1,68 @@
 import React, { useEffect, useLayoutEffect } from 'react'
 import { View, StyleSheet, FlatList } from 'react-native'
-import { HStack, Input, Icon, StatusBar, Box, Pressable, Center, Stack, Text } from 'native-base'
+import { Input, Icon, Avatar } from 'native-base'
 import globalStyles from '../styles/global-styles'
 /*FIREBASE */
-import { onSnapshot, doc, getFirestore, addDoc, collection, query, orderBy, getDoc, getDocs, updateDoc } from "firebase/firestore";
+import { onSnapshot, doc, getFirestore, addDoc, collection, query, orderBy } from "firebase/firestore";
 import { getAuth } from "firebase/auth"
 /*ICONS*/
 import { Ionicons } from '@expo/vector-icons';
 import ChatBox from './ChatBox';
+import UserAvatar from './UserAvatar';
 
 const Chat = ({ route, navigation }) => {
     const db = getFirestore()
     const auth = getAuth()
-    const { friendName, friendId, actualUserUid } = route.params;
-    const [message, setMessage] = React.useState('')
+    const { friendName, friendId, actualUserUid, profilePhoto } = route.params;
+    const [messageInputValue, setMessageInputValue] = React.useState('')
     const [messages, setMessages] = React.useState([])
     useEffect(() => {
-        let unsubcribe = getMessages()
+        const id = actualUserUid > friendId ? `${actualUserUid + friendId}` : `${friendId + actualUserUid}`
+        const chatRef = query(collection(db, 'chats', id, 'chat'), orderBy('sentAt.date', 'asc'), orderBy('sentAt.hour', 'asc'))
+        const unsubcribe = onSnapshot(chatRef, querySnapshot => {
+            let msgs = []
+            querySnapshot.forEach(data => {
+                let msg = {
+                    messageId: data.id,
+                    message: data.data().message,
+                    recievedBy: data.data().recievedBy,
+                    sentBy: data.data().sentBy,
+                    sentAt: {
+                        date: data.data().sentAt.date,
+                        hour: data.data().sentAt.hour.replace(/(.*)\D\d+/, '$1')
+                    }
+                }
+                msgs.push(msg)
+            })
+            setMessages(msgs)
+        })
         return () => {
-            unsubcribe
+            unsubcribe()
         };
     }, []);
 
     useLayoutEffect(() => {
+        const url = 'https://dam.ngenespanol.com/wp-content/uploads/2019/10/perros-personalidad-2.jpg'
         navigation.setOptions({
-            title: friendName
+            title: friendName,
+            headerLeft: () => <UserAvatar size='10' source={profilePhoto} marginRight={2} marginLeft={-5} />,
+            headerBackVisible: true            
         })
     }, [navigation])
 
-
-    const getMessages = () => {
-        const id = actualUserUid > friendId ? `${actualUserUid + friendId}` : `${friendId + actualUserUid}`
-        const q = query(collection(db, 'chats', id, 'chat'), orderBy('sendAt.date', 'asc'), orderBy('sendAt.hour', 'asc'))
-        onSnapshot(q, querySnapshot => {
-            let msgs = []
-            querySnapshot.forEach(data => {
-                msgs.push(data.data())
-            })
-            setMessages(msgs)
-        })
-        console.log(messages);
-
-    }
     async function sendMessages() {
+        setMessageInputValue('')
         const id = actualUserUid > friendId ? `${actualUserUid + friendId}` : `${friendId + actualUserUid}`
         await addDoc(collection(db, 'chats', id, 'chat'), {
-            sendBy: actualUserUid,
+            sentBy: actualUserUid,
             recievedBy: friendId,
-            message: message,
-            sendAt: {
+            message: messageInputValue,
+            sentAt: {
                 date: new Date().toLocaleDateString('es', { year: '2-digit' }),
                 hour: new Date().toLocaleTimeString([], { hour12: true })
             }
         })
+
     }
 
     return (
@@ -60,10 +70,12 @@ const Chat = ({ route, navigation }) => {
             <FlatList
                 data={messages}
                 renderItem={({ item }) =>
-                    <ChatBox message={item.message} actualUserUid={actualUserUid} sendBy={item.sendBy} hourSend={item.sendAt.hour} />
+                    <ChatBox message={item.message} actualUserUid={actualUserUid} sentBy={item.sentBy} sendtHour={item.sentAt.hour} />
                 }
-            //keyExtractor={item => item.sendBy}
+                keyExtractor={item => item.messageId}
             />
+
+
             <Input
                 placeholder="Write a message..."
                 width="90%"
@@ -74,8 +86,8 @@ const Chat = ({ route, navigation }) => {
                 /*  bg={'muted.50'} */
                 variant={'rounded'}
                 _focus={{ borderColor: '#fff' }}
-                value={message}
-                onChangeText={text => setMessage(text)}
+                value={messageInputValue}
+                onChangeText={text => setMessageInputValue(text)}
                 InputRightElement={
                     <Icon
                         mr="3"
@@ -98,8 +110,7 @@ const styles = StyleSheet.create({
         height: globalStyles.windowDimensions.height,
         width: globalStyles.windowDimensions.width,
         flex: 1,
-        backgroundColor: 'white',
-        justifyContent: 'flex-end'
+        backgroundColor: 'grey'
     }
 
 })

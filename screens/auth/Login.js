@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react'
 import { View, StyleSheet } from 'react-native'
 import { useFocusEffect } from '@react-navigation/core';
-import { Text, Center, Image, Input, Icon, Stack, Button, Divider, Flex, KeyboardAvoidingView, FormControl, Spinner } from 'native-base';
+import { Text, Center, Image, Input, Icon, Stack, Button, Divider, Flex, KeyboardAvoidingView, FormControl, Spinner, ScrollView } from 'native-base';
 import globalStyles from '../../styles/global-styles';
 /*FIREBASE*/
 import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
@@ -131,6 +131,7 @@ const Login = ({ navigation }) => {
                     </Stack>
                 </FormControl>
             </KeyboardAvoidingView >
+
         </View >
 
 
