@@ -1,10 +1,16 @@
 import React from 'react'
-import { View, Text } from 'react-native'
+import { View } from 'react-native'
+import { HStack, Text, Avatar, VStack, Stack, Badge, Divider, Button } from 'native-base'
+const GroupChats = ({ props }) => {
 
-const GroupChats = () => {
+    function navigationParams() {
+        props.navigate('Users', {
+            newGroup: 'New Group'
+        })
+    }
     return (
         <View>
-            <Text></Text>
+            <Button onPress={() => navigationParams()}> todos los usuarios </Button>
         </View>
     )
 }

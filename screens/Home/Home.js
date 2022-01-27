@@ -7,13 +7,14 @@ import { TabView, SceneMap } from 'react-native-tab-view';
 /*ICONS*/
 import { MaterialIcons } from '@expo/vector-icons';
 import AllChats from './TabViews/AllChats';
-const Home = ({navigation}) => {
+import GroupChats from './TabViews/GroupChats';
+const Home = ({ navigation }) => {
     const FirstRoute = () => <AllChats props={navigation}></AllChats>;
-    const SecondRoute = () => <Center flex={1}>This is Tab 2</Center>;
+    const SecondRoute = () => <GroupChats props={navigation}></GroupChats>;
     const [index, setIndex] = React.useState(0);
     const [routes] = React.useState([
-        { key: 'first', title: 'Tab 1' },
-        { key: 'second', title: 'Tab 2' }
+        { key: 'first', title: 'Chats' },
+        { key: 'second', title: 'Group Chats' }
     ]);
     const renderScene = SceneMap({
         first: FirstRoute,
@@ -49,8 +50,6 @@ const Home = ({navigation}) => {
                                 onPress={() => {
                                     console.log(i);
                                     setIndex(i);
-
-
                                 }}>
                                 <Animated.Text style={{ color }}>{route.title}</Animated.Text>
                             </Pressable>

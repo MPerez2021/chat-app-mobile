@@ -11,6 +11,8 @@ const UserAvatar = (props) => {
             }}
             marginLeft={props.marginLeft}
             marginRight={props.marginRight}
+            borderColor={'black'}
+            
         />
     );
 };

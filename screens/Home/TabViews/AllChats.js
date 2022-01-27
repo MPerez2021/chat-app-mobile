@@ -37,7 +37,7 @@ const AllChats = ({ props }) => {
     ]
     return (
         <View style={styles.container}>
-            <Button onPress={()=> props.navigate('Users')}> todos los usuarios </Button>
+            <Button onPress={() => props.navigate('Users', { newChat: 'New Chat' })}> todos los usuarios </Button>
             <FlatList data={hola}
                 renderItem={({ item }) =>
                     <TouchableHighlight onPress={() => props.navigate('Chat')}>

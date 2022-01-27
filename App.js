@@ -47,7 +47,7 @@ export default function App() {
           {!userLogged ? <Stack.Group>
             <Stack.Screen
               name='Login'
-              component={Login}             
+              component={Login}
             />
             <Stack.Screen
               name='Register'
@@ -61,8 +61,8 @@ export default function App() {
                   headerRight: () => <Icon as={Entypo} name="log-out" onPress={logOut} />,
                   headerLeft: () => false
                 }} />
-              <Stack.Screen name='Chat' component={Chat}/>
-              <Stack.Screen name='Users' component={AllUsers}/>
+              <Stack.Screen name='Chat' component={Chat} />
+              <Stack.Screen name='Users' component={AllUsers} />
             </Stack.Group>}
 
 
