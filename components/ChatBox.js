@@ -4,7 +4,7 @@ import globalStyles from '../styles/global-styles';
 
 
 const ChatBox = ({ message, sentBy, sentHour, actualUserUid }) => {
-    const detecImages = () => {
+    const detectImages = () => {
         let pattern = /http?s?:?\/\/.*\.(?:png|jpg|jpeg|gif|png|svg|com)((\/).+)?/;
         return pattern.test(message)
     }
@@ -20,7 +20,7 @@ const ChatBox = ({ message, sentBy, sentHour, actualUserUid }) => {
                     borderBottomLeftRadius={25}
                     borderBottomRightRadius={25}>
                     <Box maxWidth={'70%'} p={2.5}>
-                        {detecImages() ? <Image source={{ uri: message }} size={'2xl'} alt='Image' borderRadius={8} /> : <Text color={'white'} fontSize={'md'}>{message}</Text>}
+                        {detectImages() ? <Image source={{ uri: message }} size={'2xl'} alt='Image' borderRadius={8} /> : <Text color={'white'} fontSize={'md'}>{message}</Text>}
                         <Text color={'white'} fontSize={'xs'} textAlign={'right'}>
                             {sentHour}
                         </Text>
@@ -33,7 +33,7 @@ const ChatBox = ({ message, sentBy, sentHour, actualUserUid }) => {
                     borderTopRightRadius={25}
                     borderBottomRightRadius={25}>
                     <Box maxWidth={'70%'} p={2.5}>
-                        {detecImages() ? <Image source={{ uri: message }} size={'2xl'} alt='Image' borderRadius={8} /> : <Text color={'black'} fontSize={'md'}>{message}</Text>}
+                        {detectImages() ? <Image source={{ uri: message }} size={'2xl'} alt='Image' borderRadius={8} /> : <Text color={'black'} fontSize={'md'}>{message}</Text>}
                         <Text color={'black'} fontSize={'xs'} textAlign={'left'}>
                             {sentHour}
                         </Text>

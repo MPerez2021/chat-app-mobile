@@ -3,7 +3,7 @@ import { View, StyleSheet, FlatList } from 'react-native'
 import { Input, Icon, Avatar, Actionsheet, useDisclose, Button, Text, Box, NativeBaseProvider, HStack } from 'native-base'
 import globalStyles from '../styles/global-styles'
 /*FIREBASE */
-import { onSnapshot, doc, getFirestore, addDoc, collection, query, orderBy } from "firebase/firestore";
+import { onSnapshot, doc, getFirestore, addDoc, collection, query, orderBy, setDoc, where, getDocs, arrayUnion } from "firebase/firestore";
 import { getAuth } from "firebase/auth"
 /*ICONS*/
 import { Ionicons } from '@expo/vector-icons';
@@ -18,9 +18,10 @@ import { pickImage, takePhotoWithCamera, uploadPhotoToStorage } from '../service
 const Chat = ({ route, navigation }) => {
     const db = getFirestore()
     const auth = getAuth()
-    const { friendName, friendId, actualUserUid, profilePhoto } = route.params;
+    const { friendName, friendId, actualUserUid, profilePhoto, actualUserPhoto, actualUserName } = route.params;
     const [messageInputValue, setMessageInputValue] = React.useState('')
     const [messages, setMessages] = React.useState([])
+    const [messageCounter, setMessageCounter] = React.useState(0);
     const { isOpen, onOpen, onClose } = useDisclose();
     const id = actualUserUid > friendId ? `${actualUserUid + friendId}` : `${friendId + actualUserUid}`
     useEffect(() => {
@@ -67,6 +68,26 @@ const Chat = ({ route, navigation }) => {
                     hour: new Date().toLocaleTimeString([], { hour12: true })
                 }
             })
+
+            await setDoc(doc(db, 'lastMessages', id), {
+                sentTo: {
+                    name: friendName,
+                    uid: friendId,
+                    photo: profilePhoto,
+                    read: false
+                },
+                sentBy: {
+                    uid: actualUserUid,
+                    name: actualUserName,
+                    photo: actualUserPhoto
+                },
+                id: [actualUserUid, friendId],
+                message: {
+                    text: messageInputValue,
+                    dateSent: new Date().toLocaleDateString('es', { year: '2-digit' }),
+                },
+                
+            })
         }
     }
 
@@ -83,6 +104,23 @@ const Chat = ({ route, navigation }) => {
                 hour: new Date().toLocaleTimeString([], { hour12: true })
             }
         })
+        await setDoc(doc(db, 'lastMessages', id), {
+            sentTo: {
+                name: friendName,
+                uid: friendId,
+                photo: profilePhoto
+            },
+            sentBy: {
+                uid: actualUserUid,
+                name: actualUserName,
+                photo: actualUserPhoto
+            },
+            id: [actualUserUid, friendId],
+            message: {
+                text: imageFromStorage,
+                dateSent: new Date().toLocaleDateString('es', { year: '2-digit' }),
+            }
+        })
     }
 
     async function handleCameraPhotosMessage() {
@@ -96,6 +134,23 @@ const Chat = ({ route, navigation }) => {
             sentAt: {
                 date: new Date().toLocaleDateString('es', { year: '2-digit' }),
                 hour: new Date().toLocaleTimeString([], { hour12: true })
+            }
+        })
+        await setDoc(doc(db, 'lastMessages', id), {
+            sentTo: {
+                name: friendName,
+                uid: friendId,
+                photo: profilePhoto
+            },
+            sentBy: {
+                uid: actualUserUid,
+                name: actualUserName,
+                photo: actualUserPhoto
+            },
+            id: [actualUserUid, friendId],
+            message: {
+                text: imageFromStorage,
+                dateSent: new Date().toLocaleDateString('es', { year: '2-digit' }),
             }
         })
     }
@@ -175,4 +230,5 @@ const styles = StyleSheet.create({
     }
 
 })
+
 export default Chat

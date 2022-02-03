@@ -1,46 +1,90 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { View, StyleSheet, FlatList, TouchableHighlight } from 'react-native'
 /*NATIVE BASE */
-import { HStack, Text, Avatar, VStack, Stack, Badge, Divider, Button } from 'native-base'
+import { HStack, Text, Avatar, VStack, Stack, Badge, Divider, Button, Icon } from 'native-base'
+/*FIREBASE*/
+import { onSnapshot, doc, getFirestore, addDoc, collection, query, where, updateDoc } from "firebase/firestore";
+import { getAuth } from "firebase/auth"
+/*ICONS */
+import { Feather } from '@expo/vector-icons';
 /* STYLES */
 import globalStyles from '../../../styles/global-styles'
-const AllChats = ({ props }) => {
-    const hola = [
-        {
-            id: 1,
-            photo: 'https://pbs.twimg.com/profile_images/1320985200663293952/lE_Kg6vr_400x400.jpg',
-            name: 'Maria Paula',
-            date: '17/01/2022',
-            message: 'NativeBase gives you a contrasting color based on your theme. You can also customise it using the useAccessibleColors hook.'
-        },
-        {
-            id: 2,
-            photo: 'https://s.france24.com/media/display/8c13820c-5b0e-11e9-bf90-005056a964fe/w:1280/p:4x3/gato.jpg',
-            name: 'Pedro Parker',
-            date: '19/01/2022',
-            message: 'NativeBase gives you a contrasting. '
-        },
-        {
-            id: 3,
-            photo: 'https://s.france24.com/media/display/8c13820c-5b0e-11e9-bf90-005056a964fe/w:1280/p:4x3/gato.jpg',
-            name: 'Pedro Parker',
-            date: '19/01/2022',
-            message: 'NativeBase gives you a contrasting. NativeBase gives you a contrasting color based on your theme. You can also customise it using the useAccessibleColors hook'
-        },
-        {
-            id: 4,
-            photo: 'https://s.france24.com/media/display/8c13820c-5b0e-11e9-bf90-005056a964fe/w:1280/p:4x3/gato.jpg',
-            name: 'Pedro Parker',
-            date: '19/01/2022',
-            message: 'NativeBase gives you a contrasting.'
+
+const AllChats = ({ props, childToParent }) => {
+    const db = getFirestore();
+    const auth = getAuth();
+    const [userChats, setUserChats] = React.useState([])
+    const [messageId, setMessageId] = React.useState('')
+    useEffect(() => {
+        const lastMessagesRef = query(collection(db, 'lastMessages'), where('id', 'array-contains', auth.currentUser.uid))
+        const unsubscribe = onSnapshot(lastMessagesRef, chats => {
+            let chatsContent = []
+            chats.forEach(info => {
+                setMessageId(info.id)
+                let chat = {
+                    chatId: info.id,
+                    sentBy: {
+                        name: info.data().sentBy.name,
+                        photo: info.data().sentBy.photo,
+                        uid: info.data().sentBy.uid
+                    },
+                    message: {
+                        text: info.data().message.text,
+                        dateSent: info.data().message.dateSent
+                    },
+                    sentTo: {
+                        name: info.data().sentTo.name,
+                        photo: info.data().sentTo.photo,
+                        read: info.data().sentTo.read,
+                        uid: info.data().sentTo.uid
+                    }
+
+                }
+                chatsContent.push(chat)
+            })
+            setUserChats(chatsContent)
+            childToParent(userChats.length);
+        })
+        return () => {
+            unsubscribe()
+        };
+    }, [])
+
+
+    const detectImages = (image) => {
+        let pattern = /http?s?:?\/\/.*\.(?:png|jpg|jpeg|gif|png|svg|com)((\/).+)?/;
+        return pattern.test(image)
+    }
+
+    const changeReadStatus = async (item) => {
+        const lastMessagesRef = doc(db, 'lastMessages', messageId)
+        if (item.sentBy.uid !== auth.currentUser.uid) {
+            await updateDoc(lastMessagesRef, {
+                'sentTo.read': true
+            })
         }
-    ]
+
+    }
+
+    const sendRoutesParams = (item) => {
+        props.navigate('Chat', {
+            friendId: item.sentBy.uid === auth.currentUser.uid ? item.sentTo.uid : item.sentBy.uid,
+            friendName: item.sentBy.uid === auth.currentUser.uid ? item.sentTo.name : item.sentBy.name,
+            profilePhoto: item.sentBy.uid === auth.currentUser.uid ? item.sentTo.photo : item.sentBy.photo,
+            actualUserUid: item.sentBy.uid === auth.currentUser.uid ? item.sentBy.uid : item.sentTo.uid,
+            actualUserPhoto: item.sentBy.photo === auth.currentUser.uid ? item.sentBy.photo : item.sentTo.photo,
+            actualUserName: item.sentBy.name === auth.currentUser.uid ? item.sentBy.name : item.sentTo.name,
+        })
+    }
     return (
         <View style={styles.container}>
             <Button onPress={() => props.navigate('Users', { newChat: 'New Chat' })}> todos los usuarios </Button>
-            <FlatList data={hola}
+            <FlatList data={userChats}
                 renderItem={({ item }) =>
-                    <TouchableHighlight onPress={() => props.navigate('Chat')}>
+                    <TouchableHighlight onPress={() => {
+                        sendRoutesParams(item)
+                        changeReadStatus(item)
+                    }}>
                         <View>
                             <Stack bg="white" direction={'row'} padding={4}>
                                 <Stack alignSelf={'center'} width={'15%'}>
@@ -48,19 +92,41 @@ const AllChats = ({ props }) => {
                                         alignContent="center"
                                         size="md"
                                         source={{
-                                            uri: item.photo
+                                            uri: item.sentBy.uid === auth.currentUser.uid ? item.sentTo.photo : item.sentBy.photo
                                         }}
                                         mr={3}
                                     />
                                 </Stack>
                                 <VStack width={'85%'}>
                                     <Stack justifyContent={"space-between"} direction={'row'}>
-                                        <Text fontSize="lg">{item.name}</Text>
-                                        <Text fontSize="sm">{item.date}</Text>
+                                        <Text fontSize="lg">{item.sentBy.uid === auth.currentUser.uid ? item.sentTo.name : item.sentBy.name}</Text>
+                                        <Text fontSize="sm">{item.message.dateSent}</Text>
                                     </Stack>
                                     <Stack justifyContent={"space-between"} direction={'row'} width={'100%'}>
-                                        <Text isTruncated fontSize="sm" maxWidth={globalStyles.windowDimensions.width} w={'85%'}>{item.message}</Text>
-                                        <Badge
+                                        {item.sentBy.uid === auth.currentUser.uid ?
+                                            <>
+                                                {detectImages(item.message.text) ?
+                                                    <HStack>
+                                                        <Icon mr="1" size="5" color="muted.500" as={<Feather name="image" />} />
+                                                        <Text color={'muted.500'}>Photo</Text>
+                                                    </HStack> :
+                                                    <Text isTruncated fontSize="sm" maxWidth={globalStyles.windowDimensions.width} w={'85%'} color={'muted.500'}>
+                                                        {item.message.text}
+                                                    </Text>}
+                                            </>
+                                            :
+                                            <>
+                                                {detectImages(item.message.text) ?
+                                                    <HStack>
+                                                        <Icon mr="1" size="5" as={<Feather name="image" />} />
+                                                        <Text>Photo</Text>
+                                                    </HStack> :
+                                                    <Text isTruncated fontSize="sm" maxWidth={globalStyles.windowDimensions.width} w={'85%'}>
+                                                        {item.message.text}
+                                                    </Text>}
+                                            </>
+                                        }
+                                        {!item.sentTo.read && item.sentBy.uid !== auth.currentUser.uid ? <Badge
                                             colorScheme="info"
                                             rounded="50"
                                             variant="solid"
@@ -70,18 +136,18 @@ const AllChats = ({ props }) => {
                                             }}
                                             ml={2}
                                         >
-                                            2
-                                        </Badge>
+                                            New
+                                        </Badge> : null}
+
                                     </Stack>
                                 </VStack>
-
                             </Stack>
                             <Divider />
                         </View>
                     </TouchableHighlight>
 
                 }
-                keyExtractor={item => item.id}
+                keyExtractor={item => item.chatId}
             />
         </View >
     )

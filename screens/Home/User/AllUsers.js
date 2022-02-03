@@ -2,15 +2,14 @@ import React, { useEffect, useLayoutEffect } from 'react';
 import { View, FlatList, StyleSheet, TouchableHighlight, ScrollView } from 'react-native';
 import globalStyles from '../../../styles/global-styles';
 /*NATIVE BASE */
-import { Text, Box, VStack, Stack, Badge, Divider, Icon, HStack, Input } from 'native-base'
-
+import { Text, Box, VStack, Stack, Badge, Divider, Icon, Button, Input } from 'native-base'
 /*ICONS */
-import { AntDesign } from '@expo/vector-icons';
 import { Entypo } from '@expo/vector-icons';
 /*FIREBASE */
-import { collection, query, getFirestore, onSnapshot, setDoc, doc, getDoc } from "firebase/firestore";
+import { collection, query, getFirestore, onSnapshot, setDoc, doc, getDoc, addDoc, where } from "firebase/firestore";
 import { getAuth } from 'firebase/auth';
-import UserAvatar from '../../../components/UserAvatar';
+import GroupChat from '../../../components/SelectChat/GroupChat';
+import OneToOneChat from '../../../components/SelectChat/OneToOneChat';
 
 const AllUsers = ({ route, navigation }) => {
     const db = getFirestore()
@@ -20,7 +19,7 @@ const AllUsers = ({ route, navigation }) => {
     const [groupName, setGroupName] = React.useState('')
     const { newGroup, newChat } = route.params;
     useEffect(() => {
-        const getAllUsers = query(collection(db, 'users'))
+        const getAllUsers = query(collection(db, 'users'), where('email', '!=', auth.currentUser.email))
         const unsubscribe = onSnapshot(getAllUsers, (data) => {
             let user = []
             data.forEach(userData => {
@@ -45,19 +44,10 @@ const AllUsers = ({ route, navigation }) => {
         })
     }, [navigation])
 
-    async function createNewChat(friendId, name) {
-        const user = auth.currentUser
-        navigation.navigate('Chat', {
-            friendId: friendId,
-            friendName: name,
-            actualUserUid: user.uid,
-            profilePhoto: user.photoURL
-        })
-    }
-
-    function createNewGroup(users) {
-        setUsersNewGroupChat([])
-        //userNewGroupChat.push(users)   
+    async function createNewGroup() {
+        //setUsersNewGroupChat([])
+        //userNewGroupChat.push(users)
+        await addDoc(collection(db, 'chats', 'autoID', 'subcollection'))
     }
 
     return (
@@ -77,58 +67,21 @@ const AllUsers = ({ route, navigation }) => {
                                 mr="3"
                                 size="6"
                                 color="muted.400"
-                                onPress={()=> console.log(groupName)}
+                                onPress={() => console.log(groupName)}
                                 as={<Entypo name="camera" />} />
-
-
                         } />
                     : null}
                 {users.map(user =>
                     <View key={user.id}>
-                        {user.id !== auth.currentUser.uid ?
-                            <View>
-                                {newChat ? <TouchableHighlight onPress={() => createNewChat(user.id, user.name)}>
-                                    <View>
-                                        <Stack bg="white" direction={'row'} padding={4}>
-                                            <Stack alignItems={'center'} width={'15%'}>
-                                                <UserAvatar size='md' source={user.photo} marginRight={3} />
-                                            </Stack>
-                                            <VStack width={'85%'}>
-                                                <Text fontSize="lg">{user.name}</Text>
-                                                <Text fontSize="md">{user.email}</Text>
-                                            </VStack>
-                                        </Stack>
-                                        <Divider />
-                                    </View>
-                                </TouchableHighlight> :
-                                    <TouchableHighlight onPress={() => createNewGroup(user)}>
-                                        <View>
-                                            <Stack bg="white" direction={'row'} padding={4}>
-                                                <Stack alignSelf={'center'} width={'15%'} mr={1}>
-                                                    <Box position={'relative'}>
-                                                        <UserAvatar size='md' source={user.photo} />
-                                                    </Box>
-                                                    <Icon
-                                                        size="5"
-                                                        position={'absolute'}
-                                                        bottom={0}
-                                                        right={1}
-                                                        color={'white'}
-                                                        backgroundColor={'green.600'}
-                                                        borderRadius={50}
-                                                        as={<AntDesign name="checkcircleo" />} />
-                                                </Stack>
-                                                <VStack width={'85%'}>
-                                                    <Text fontSize="lg">{user.name}</Text>
-                                                    <Text fontSize="md">{user.email}</Text>
-                                                </VStack>
-                                            </Stack>
-                                            <Divider />
-                                        </View>
-                                    </TouchableHighlight>}
-                            </View> : null}
+                        {newChat ? <OneToOneChat user={user} navigation={navigation} /> :
+                            <GroupChat userId={user.id}
+                                userNewGroupChat={userNewGroupChat}
+                                name={user.name}
+                                email={user.email}
+                                photo={user.photo} />}
                     </View>
                 )}
+                {newGroup ? <Button onPress={() => createNewGroup()}>CREAR</Button> : null}
             </ScrollView>
         </View>
     );

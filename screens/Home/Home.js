@@ -1,7 +1,7 @@
 import React from 'react'
 import { View, StyleSheet, Animated } from 'react-native'
 /*NATIVE BASE */
-import { HStack, Input, Icon, StatusBar, Box, Pressable, Center } from 'native-base'
+import { HStack, Input, Icon, StatusBar, Box, Pressable, Center, Text } from 'native-base'
 import globalStyles from '../../styles/global-styles'
 import { TabView, SceneMap } from 'react-native-tab-view';
 /*ICONS*/
@@ -9,11 +9,18 @@ import { MaterialIcons } from '@expo/vector-icons';
 import AllChats from './TabViews/AllChats';
 import GroupChats from './TabViews/GroupChats';
 const Home = ({ navigation }) => {
-    const FirstRoute = () => <AllChats props={navigation}></AllChats>;
+    const [numberOfChats, setNumberOfChats] = React.useState(0)
+    const childToParent = (childData) => {
+        setNumberOfChats(childData)
+    }
+    const FirstRoute = () => <AllChats props={navigation} childToParent={childToParent}></AllChats>;
     const SecondRoute = () => <GroupChats props={navigation}></GroupChats>;
     const [index, setIndex] = React.useState(0);
+
+
+
     const [routes] = React.useState([
-        { key: 'first', title: 'Chats' },
+        { key: 'first', title: 'Chats' + numberOfChats },
         { key: 'second', title: 'Group Chats' }
     ]);
     const renderScene = SceneMap({
@@ -21,7 +28,7 @@ const Home = ({ navigation }) => {
         second: SecondRoute
     });
 
-
+    //console.log(numberOfChats);
     const renderTabBar = (props) => {
         /* props.navigationState.routes = devuelve una lista de objetos de las rutas renderizadas en
         pantalla actual */
@@ -89,7 +96,9 @@ const Home = ({ navigation }) => {
                         />
                     }
                 />
+                
             </HStack>
+            <Text>{numberOfChats}</Text>
             <TabView
                 navigationState={{ index, routes }}
                 renderScene={renderScene}
