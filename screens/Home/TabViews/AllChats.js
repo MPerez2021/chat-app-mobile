@@ -10,11 +10,12 @@ import { Feather } from '@expo/vector-icons';
 /* STYLES */
 import globalStyles from '../../../styles/global-styles'
 
-const AllChats = ({ props, childToParent }) => {
+const AllChats = ({ props }) => {
     const db = getFirestore();
     const auth = getAuth();
     const [userChats, setUserChats] = React.useState([])
     const [messageId, setMessageId] = React.useState('')
+
     useEffect(() => {
         const lastMessagesRef = query(collection(db, 'lastMessages'), where('id', 'array-contains', auth.currentUser.uid))
         const unsubscribe = onSnapshot(lastMessagesRef, chats => {
@@ -42,9 +43,8 @@ const AllChats = ({ props, childToParent }) => {
                 }
                 chatsContent.push(chat)
             })
-            setUserChats(chatsContent)
-            childToParent(userChats.length);
-        })
+            setUserChats(chatsContent)       
+        }) 
         return () => {
             unsubscribe()
         };
@@ -63,7 +63,6 @@ const AllChats = ({ props, childToParent }) => {
                 'sentTo.read': true
             })
         }
-
     }
 
     const sendRoutesParams = (item) => {

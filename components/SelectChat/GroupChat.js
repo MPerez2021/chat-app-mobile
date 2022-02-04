@@ -4,7 +4,7 @@ import { TouchableHighlight } from 'react-native';
 import UserAvatar from '../UserAvatar';
 import { AntDesign } from '@expo/vector-icons';
 const GroupChat = ({ userId, userNewGroupChat, photo, name, email }) => {
-    function addUserToGroup(userId) {
+    function addUserToGroup(userId) {     
         userNewGroupChat.push(userId)
     }
     return <View>

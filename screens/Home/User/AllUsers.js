@@ -45,9 +45,30 @@ const AllUsers = ({ route, navigation }) => {
     }, [navigation])
 
     async function createNewGroup() {
-        //setUsersNewGroupChat([])
+
         //userNewGroupChat.push(users)
-        await addDoc(collection(db, 'chats', 'autoID', 'subcollection'))
+        //console.log(userNewGroupChat);
+        /* let x = crypto.getRandomValues
+        console.log(x); */
+        await addDoc(collection(db, 'groupChats', '123', 'chats'), {
+            message: 'Hola como estas'
+
+        })
+        let hola = userNewGroupChat
+        hola.push(auth.currentUser.uid)
+        await addDoc(collection(db, 'groupIdUsers'), {
+            name: groupName,
+            foto: '',
+            id: '123',
+            users: hola
+        })
+
+        navigation.navigate('GroupChatScreen', {
+            id: '123',
+            name: groupName
+        })
+        hola = []
+        setUsersNewGroupChat([])
     }
 
     return (

@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useCallbac, useEffect } from 'react'
 import { View, StyleSheet, Animated } from 'react-native'
 /*NATIVE BASE */
 import { HStack, Input, Icon, StatusBar, Box, Pressable, Center, Text } from 'native-base'
@@ -9,18 +9,20 @@ import { MaterialIcons } from '@expo/vector-icons';
 import AllChats from './TabViews/AllChats';
 import GroupChats from './TabViews/GroupChats';
 const Home = ({ navigation }) => {
-    const [numberOfChats, setNumberOfChats] = React.useState(0)
-    const childToParent = (childData) => {
-        setNumberOfChats(childData)
-    }
-    const FirstRoute = () => <AllChats props={navigation} childToParent={childToParent}></AllChats>;
+
+ /*    const [numberOfChats, setNumberOfChats] = React.useState(0)
+    function childToParents(childData) {
+        console.log(childData.length)    
+    } */
+
+    const FirstRoute = () => <AllChats props={navigation}></AllChats>;
     const SecondRoute = () => <GroupChats props={navigation}></GroupChats>;
     const [index, setIndex] = React.useState(0);
 
 
 
     const [routes] = React.useState([
-        { key: 'first', title: 'Chats' + numberOfChats },
+        { key: 'first', title: 'Chats' },
         { key: 'second', title: 'Group Chats' }
     ]);
     const renderScene = SceneMap({
@@ -96,9 +98,8 @@ const Home = ({ navigation }) => {
                         />
                     }
                 />
-                
+
             </HStack>
-            <Text>{numberOfChats}</Text>
             <TabView
                 navigationState={{ index, routes }}
                 renderScene={renderScene}
