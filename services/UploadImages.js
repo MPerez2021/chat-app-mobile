@@ -29,7 +29,7 @@ async function takePhotoWithCamera() {
         return cameraResult.uri
     }
 }
-async function uploadPhotoToStorage(uri, email) {
+async function uploadPhotoToStorage(folderName, uri, emailOrId, subFolder) {
     const blob = await new Promise((resolve, reject) => {
         const xhr = new XMLHttpRequest();
         xhr.onload = function () {
@@ -45,8 +45,9 @@ async function uploadPhotoToStorage(uri, email) {
         xhr.open('GET', uri, true);
         xhr.send(null);
     });
+
     let imageUrl = uri.split("/ImagePicker/")
-    const refR = ref(getStorage(), 'users/' + email + '/sentPhotos/' + imageUrl[1])
+    const refR = ref(getStorage(), `${folderName}/` + emailOrId + `/${subFolder}/` + imageUrl[1])
     const result = await uploadBytes(refR, blob)
     blob.close();
     return getDownloadURL(refR)

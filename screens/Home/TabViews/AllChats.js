@@ -71,8 +71,8 @@ const AllChats = ({ props }) => {
             friendName: item.sentBy.uid === auth.currentUser.uid ? item.sentTo.name : item.sentBy.name,
             profilePhoto: item.sentBy.uid === auth.currentUser.uid ? item.sentTo.photo : item.sentBy.photo,
             actualUserUid: item.sentBy.uid === auth.currentUser.uid ? item.sentBy.uid : item.sentTo.uid,
-            actualUserPhoto: item.sentBy.photo === auth.currentUser.uid ? item.sentBy.photo : item.sentTo.photo,
-            actualUserName: item.sentBy.name === auth.currentUser.uid ? item.sentBy.name : item.sentTo.name,
+            actualUserPhoto: item.sentBy.uid === auth.currentUser.uid ? item.sentBy.photo : item.sentTo.photo,
+            actualUserName: item.sentBy.uid === auth.currentUser.uid ? item.sentBy.name : item.sentTo.name,
         })
     }
     return (

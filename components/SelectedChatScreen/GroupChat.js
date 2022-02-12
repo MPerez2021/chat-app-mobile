@@ -4,8 +4,19 @@ import { TouchableHighlight } from 'react-native';
 import UserAvatar from '../UserAvatar';
 import { AntDesign } from '@expo/vector-icons';
 const GroupChat = ({ userId, userNewGroupChat, photo, name, email }) => {
-    function addUserToGroup(userId) {     
-        userNewGroupChat.push(userId)
+    const [userAdded, setUserAdded] = React.useState(false)
+    function addUserToGroup(userId) {
+        if (userNewGroupChat.indexOf(userId) === -1) {
+            userNewGroupChat.push(userId)
+            setUserAdded(!userAdded)
+        } else {
+            /*Busco el index donde se encuentra el id, y elimino el id de la
+            posición en que se encuentra*/
+            let index = userNewGroupChat.indexOf(userId, 0)
+            userNewGroupChat.splice(index, 1)
+            setUserAdded(!userAdded)
+        }
+
     }
     return <View>
         <TouchableHighlight onPress={() => addUserToGroup(userId)}>
@@ -15,7 +26,7 @@ const GroupChat = ({ userId, userNewGroupChat, photo, name, email }) => {
                         <Box position={'relative'}>
                             <UserAvatar size='md' source={photo} />
                         </Box>
-                        <Icon
+                        {userAdded ? <Icon
                             size="5"
                             position={'absolute'}
                             bottom={0}
@@ -23,7 +34,8 @@ const GroupChat = ({ userId, userNewGroupChat, photo, name, email }) => {
                             color={'white'}
                             backgroundColor={'green.600'}
                             borderRadius={50}
-                            as={<AntDesign name="checkcircleo" />} />
+                            as={<AntDesign name="checkcircleo" />} /> : null}
+
                     </Stack>
                     <VStack width={'85%'}>
                         <Text fontSize="lg">{name}</Text>

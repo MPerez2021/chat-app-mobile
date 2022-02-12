@@ -1,47 +1,73 @@
 import React from 'react';
-import { Box, Stack, Text, Image } from 'native-base'
+import { Box, Stack, Text, Image, HStack } from 'native-base'
 import globalStyles from '../styles/global-styles';
+import UserAvatar from './UserAvatar';
 
-
-const ChatBox = ({ message, sentBy, sentHour, actualUserUid }) => {
+const ChatBox = ({ message, sentBy, sentHour, actualUserUid, isGroupChat, userPhoto, userName }) => {
     const detectImages = () => {
         let pattern = /http?s?:?\/\/.*\.(?:png|jpg|jpeg|gif|png|svg|com)((\/).+)?/;
         return pattern.test(message)
     }
+
     return (
         <Stack mb={1} w={globalStyles.windowDimensions.width} mt={2}>
             {sentBy === actualUserUid ?
-                <Stack bg={'#2176FF'}
-                    alignSelf={'flex-end'}
-                    justifyContent={'flex-end'}
-                    direction={'row'}
-                    mr={2}
-                    borderTopLeftRadius={25}
-                    borderBottomLeftRadius={25}
-                    borderBottomRightRadius={25}>
-                    <Box maxWidth={'70%'} p={2.5}>
-                        {detectImages() ? <Image source={{ uri: message }} size={'2xl'} alt='Image' borderRadius={8} /> : <Text color={'white'} fontSize={'md'}>{message}</Text>}
-                        <Text color={'white'} fontSize={'xs'} textAlign={'right'}>
-                            {sentHour}
-                        </Text>
-                    </Box>
-                </Stack> :
-                <Stack bg={'gray.50'}
+                <HStack alignSelf={'flex-end'}
+                    alignItems={'flex-end'}
+                    maxWidth={'70%'}
+                    mr={3}>
+                    <Stack bg={'#2176FF'}
+                        borderTopLeftRadius={25}
+                        borderTopRightRadius={25}
+                        borderBottomLeftRadius={25}
+                        maxWidth={isGroupChat ? '90%' : '100%'}>
+                        <Box p={2.5}>
+                            {detectImages()
+                                ? <Image source={{ uri: message }} size={'2xl'} alt='Image' borderRadius={8} />
+                                : <Text color={'white'} fontSize={'md'}>{message}</Text>
+                            }
+                            <Text color={'white'} fontSize={'xs'} textAlign={'right'}>
+                                {sentHour}
+                            </Text>
+                        </Box>
+                    </Stack>
+                    {isGroupChat ?
+                        <Box maxWidth={'10%'} ml={1}>
+                            <UserAvatar size={'sm'} source={userPhoto} /></Box>
+                        : null}
+                </HStack>
+                :
+                <HStack
                     alignSelf={'flex-start'}
-                    ml={2}
-                    borderTopLeftRadius={25}
-                    borderTopRightRadius={25}
-                    borderBottomRightRadius={25}>
-                    <Box maxWidth={'70%'} p={2.5}>
-                        {detectImages() ? <Image source={{ uri: message }} size={'2xl'} alt='Image' borderRadius={8} /> : <Text color={'black'} fontSize={'md'}>{message}</Text>}
-                        <Text color={'black'} fontSize={'xs'} textAlign={'left'}>
-                            {sentHour}
-                        </Text>
-                    </Box>
-                </Stack>
+                    alignItems={'flex-end'}
+                    maxWidth={'70%'}
+                    ml={2} >
+                    {isGroupChat ?
+                        <Box maxWidth={'15%'} mr={1}>
+                            <UserAvatar size={'sm'} source={userPhoto} /></Box>
+                        : null}
+                    <Stack bg={'gray.50'}
+                        borderTopLeftRadius={25}
+                        borderTopRightRadius={25}
+                        borderBottomRightRadius={25}
+                        maxWidth={isGroupChat ? '100%' : '100%'}>
+                        <Box p={2.5}>
+                            {isGroupChat
+                                ? <Text color={'black'} fontSize={'xs'} textAlign={'right'}>
+                                    ~ {userName}
+                                </Text>
+                                : null}
+                            {detectImages() ? <Image source={{ uri: message }} size={'2xl'} alt='Image' borderRadius={8} /> : <Text color={'black'} fontSize={'md'}>{message}</Text>}
+                            <Text color={'black'} fontSize={'xs'} textAlign={'left'}>
+                                {sentHour}
+                            </Text>
+                        </Box>
+                    </Stack>
+                </HStack>
+
             }
 
-        </Stack>
+        </Stack >
     );
 };
 export default ChatBox;

@@ -14,11 +14,13 @@ const GroupChats = ({ props }) => {
         const groupRef = query(collection(db, 'groupIdUsers'), where('users', 'array-contains', auth.currentUser.uid))
         const unsubscribe = onSnapshot(groupRef, groups => {
             let groupChatContent = []
-            groups.forEach(info => {               
+            groups.forEach(info => {
                 let group = {
                     documentId: info.id,
                     groupId: info.data().id,
-                    name: info.data().name
+                    groupName: info.data().groupName,
+                    createdBy: info.data().createdBy.name,
+                    groupPhoto: info.data().groupPhoto
                 }
                 groupChatContent.push(group)
             })
@@ -43,7 +45,10 @@ const GroupChats = ({ props }) => {
                     <TouchableHighlight onPress={() => {
                         props.navigate('GroupChatScreen', {
                             id: item.groupId,
-                            name: item.name
+                            groupName: item.groupName,
+                            createdBy: item.createdBy,
+                            groupImage: item.groupPhoto,
+                            isGroupChat: true
                         })
                     }}>
                         <View>
@@ -53,19 +58,17 @@ const GroupChats = ({ props }) => {
                                         alignContent="center"
                                         size="md"
                                         source={{
-                                            uri: auth.currentUser.photoURL
+                                            uri: item.groupPhoto
                                         }}
                                         mr={3}
                                     />
                                 </Stack>
                                 <VStack width={'85%'}>
                                     <Stack justifyContent={"space-between"} direction={'row'}>
-                                        <Text fontSize="lg">{item.name}</Text>
-                                        {/* <Text fontSize="sm">{item.message.dateSent}</Text> */}
+                                        <Text fontSize="lg">{item.groupName}</Text>
+                                        {/*  {item.message.text ? <Text fontSize="sm">{item.message.text}</Text>: 'HAS AÑADIDO A'} */}
                                     </Stack>
                                     <Stack justifyContent={"space-between"} direction={'row'} width={'100%'}>
-
-
                                     </Stack>
                                 </VStack>
                             </Stack>

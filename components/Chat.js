@@ -20,8 +20,7 @@ const Chat = ({ route, navigation }) => {
     const auth = getAuth()
     const { friendName, friendId, actualUserUid, profilePhoto, actualUserPhoto, actualUserName } = route.params;
     const [messageInputValue, setMessageInputValue] = React.useState('')
-    const [messages, setMessages] = React.useState([])
-    const [messageCounter, setMessageCounter] = React.useState(0);
+    const [messages, setMessages] = React.useState([])    
     const { isOpen, onOpen, onClose } = useDisclose();
     const id = actualUserUid > friendId ? `${actualUserUid + friendId}` : `${friendId + actualUserUid}`
     useEffect(() => {
@@ -94,7 +93,7 @@ const Chat = ({ route, navigation }) => {
     async function handleLibaryPhotosMessages() {
         onClose()
         let image = await pickImage()
-        let imageFromStorage = await uploadPhotoToStorage(image, auth.currentUser.email)
+        let imageFromStorage = await uploadPhotoToStorage('users',image, auth.currentUser.email, 'sentPhotos')
         await addDoc(collection(db, 'chats', id, 'chat'), {
             sentBy: actualUserUid,
             recievedBy: friendId,
@@ -126,7 +125,7 @@ const Chat = ({ route, navigation }) => {
     async function handleCameraPhotosMessage() {
         onClose()
         let photo = await takePhotoWithCamera()
-        let imageFromStorage = await uploadPhotoToStorage(photo, auth.currentUser.email)
+        let imageFromStorage = await uploadPhotoToStorage('users',photo, auth.currentUser.email, 'sentPhotos')
         await addDoc(collection(db, 'chats', id, 'chat'), {
             sentBy: actualUserUid,
             recievedBy: friendId,
