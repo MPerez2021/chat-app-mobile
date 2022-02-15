@@ -10,17 +10,14 @@ import AllChats from './TabViews/AllChats';
 import GroupChats from './TabViews/GroupChats';
 const Home = ({ navigation }) => {
 
- /*    const [numberOfChats, setNumberOfChats] = React.useState(0)
-    function childToParents(childData) {
-        console.log(childData.length)    
-    } */
+    /*    const [numberOfChats, setNumberOfChats] = React.useState(0)
+       function childToParents(childData) {
+           console.log(childData.length)    
+       } */
 
     const FirstRoute = () => <AllChats props={navigation}></AllChats>;
     const SecondRoute = () => <GroupChats props={navigation}></GroupChats>;
     const [index, setIndex] = React.useState(0);
-
-
-
     const [routes] = React.useState([
         { key: 'first', title: 'Chats' },
         { key: 'second', title: 'Group Chats' }
@@ -34,7 +31,7 @@ const Home = ({ navigation }) => {
     const renderTabBar = (props) => {
         /* props.navigationState.routes = devuelve una lista de objetos de las rutas renderizadas en
         pantalla actual */
-        const inputRange = props.navigationState.routes.map((x, position) => position);
+        const inputRange = props.navigationState.routes.map((x, position) => position);     
         return (
             <Box flexDirection="row">
                 {props.navigationState.routes.map((route, i) => {

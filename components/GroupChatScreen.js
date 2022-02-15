@@ -2,14 +2,14 @@
 import React, { useEffect, useLayoutEffect } from 'react';
 import { View, StyleSheet } from 'react-native';
 /*NATIVE BASE */
-import { Input, Icon, Avatar, FlatList, Actionsheet, useDisclose, Button, Text, Box, NativeBaseProvider, HStack } from 'native-base'
+import { Input, Icon, FlatList, Actionsheet, useDisclose, Box, Text } from 'native-base'
 /*ICONS*/
 import { Ionicons } from '@expo/vector-icons';
 import { Entypo } from '@expo/vector-icons';
 import { FontAwesome } from '@expo/vector-icons';
 import { Feather } from '@expo/vector-icons';
 /*FIREBASE */
-import { onSnapshot, getFirestore, collection, query, addDoc, orderBy } from "firebase/firestore"
+import { onSnapshot, getFirestore, collection, query, addDoc, orderBy, doc, updateDoc } from "firebase/firestore"
 import { getAuth } from 'firebase/auth';
 
 import globalStyles from '../styles/global-styles';
@@ -24,7 +24,7 @@ const GroupChatScreen = ({ route, navigation }) => {
     const [messages, setMessages] = React.useState([])
     const [messageInputValue, setMessageInputValue] = React.useState('')
     const { isOpen, onOpen, onClose } = useDisclose();
-    const { id, groupName, createdBy, isGroupChat, groupImage } = route.params;
+    const { id, groupName, createdBy, isGroupChat, groupImage, groupUsers } = route.params;
     const actualUserId = auth.currentUser.uid
     const currentUserName = auth.currentUser.displayName
     const userPhotoProfile = auth.currentUser.photoURL
@@ -78,25 +78,17 @@ const GroupChatScreen = ({ route, navigation }) => {
                     hour: new Date().toLocaleTimeString([], { hour12: true })
                 }
             })
-            /*  await setDoc(doc(db, 'lastGroupMessages', id), {
-                 sentTo: {
-                     name: friendName,
-                     uid: friendId,
-                     photo: profilePhoto,
-                     read: false
-                 },
-                 sentBy: {
-                     uid: actualUserUid,
-                     name: actualUserName,
-                     photo: actualUserPhoto
-                 },
-                 id: [actualUserUid, friendId],
-                 message: {
-                     text: messageInputValue,
-                     dateSent: new Date().toLocaleDateString('es', { year: '2-digit' }),
-                 },
- 
-             }) */
+            await updateDoc(doc(db, 'groupIdUsers', id), {
+                lastMessage: {
+                    sentBy: {
+                        uid: actualUserId,
+                        userName: currentUserName
+                    },
+                    message: messageInputValue,
+                    dateSent: new Date().toLocaleDateString('es', { year: '2-digit' }),
+
+                }
+            })
         }
     }
 
@@ -116,6 +108,17 @@ const GroupChatScreen = ({ route, navigation }) => {
                 sentAt: {
                     date: new Date().toLocaleDateString('es', { year: '2-digit' }),
                     hour: new Date().toLocaleTimeString([], { hour12: true })
+                }
+            })
+            await updateDoc(doc(db, 'groupIdUsers', id), {
+                lastMessage: {
+                    sentBy: {
+                        uid: actualUserId,
+                        userName: currentUserName
+                    },
+                    message: imageFromStorage,
+                    dateSent: new Date().toLocaleDateString('es', { year: '2-digit' }),
+
                 }
             })
         }
@@ -138,6 +141,17 @@ const GroupChatScreen = ({ route, navigation }) => {
                 sentAt: {
                     date: new Date().toLocaleDateString('es', { year: '2-digit' }),
                     hour: new Date().toLocaleTimeString([], { hour12: true })
+                }
+            })
+            await updateDoc(doc(db, 'groupIdUsers', id), {
+                lastMessage: {
+                    sentBy: {
+                        uid: actualUserId,
+                        userName: currentUserName
+                    },
+                    message: imageFromStorage,
+                    dateSent: new Date().toLocaleDateString('es', { year: '2-digit' }),
+
                 }
             })
         }

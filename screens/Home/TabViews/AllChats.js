@@ -1,12 +1,13 @@
 import React, { useEffect } from 'react'
 import { View, StyleSheet, FlatList, TouchableHighlight } from 'react-native'
 /*NATIVE BASE */
-import { HStack, Text, Avatar, VStack, Stack, Badge, Divider, Button, Icon } from 'native-base'
+import { HStack, Text, Avatar, VStack, Stack, Badge, Divider, IconButton, Icon } from 'native-base'
 /*FIREBASE*/
 import { onSnapshot, doc, getFirestore, addDoc, collection, query, where, updateDoc } from "firebase/firestore";
 import { getAuth } from "firebase/auth"
 /*ICONS */
 import { Feather } from '@expo/vector-icons';
+import { MaterialIcons } from '@expo/vector-icons';
 /* STYLES */
 import globalStyles from '../../../styles/global-styles'
 
@@ -43,8 +44,8 @@ const AllChats = ({ props }) => {
                 }
                 chatsContent.push(chat)
             })
-            setUserChats(chatsContent)       
-        }) 
+            setUserChats(chatsContent)
+        })
         return () => {
             unsubscribe()
         };
@@ -77,7 +78,6 @@ const AllChats = ({ props }) => {
     }
     return (
         <View style={styles.container}>
-            <Button onPress={() => props.navigate('Users', { newChat: 'New Chat' })}> todos los usuarios </Button>
             <FlatList data={userChats}
                 renderItem={({ item }) =>
                     <TouchableHighlight onPress={() => {
@@ -148,6 +148,18 @@ const AllChats = ({ props }) => {
                 }
                 keyExtractor={item => item.chatId}
             />
+            <IconButton
+                onPress={() => props.navigate('Users', { newChat: 'New Chat' })}
+                icon={<MaterialIcons name="chat" size={24} color="white" />}
+                position='absolute'
+                bottom={10}
+                right={5}
+                p={4}
+                bg={'blue.400'}
+                borderRadius="full"
+                _pressed={{
+                    bg: 'blue.500'
+                }} />
         </View >
     )
 }

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Stack, View, Box, Icon, VStack, Text, Divider } from 'native-base';
-import { TouchableHighlight } from 'react-native';
+import { FlatList, TouchableHighlight } from 'react-native';
 import UserAvatar from '../UserAvatar';
 import { AntDesign } from '@expo/vector-icons';
 const GroupChat = ({ userId, userNewGroupChat, photo, name, email }) => {
@@ -16,11 +16,10 @@ const GroupChat = ({ userId, userNewGroupChat, photo, name, email }) => {
             userNewGroupChat.splice(index, 1)
             setUserAdded(!userAdded)
         }
-
     }
     return <View>
         <TouchableHighlight onPress={() => addUserToGroup(userId)}>
-            <View>
+            <>
                 <Stack bg="white" direction={'row'} padding={4}>
                     <Stack alignSelf={'center'} width={'15%'} mr={1}>
                         <Box position={'relative'}>
@@ -43,7 +42,7 @@ const GroupChat = ({ userId, userNewGroupChat, photo, name, email }) => {
                     </VStack>
                 </Stack>
                 <Divider />
-            </View>
+            </>
         </TouchableHighlight>
     </View>
 };

@@ -2,16 +2,14 @@ import React, { useEffect, useLayoutEffect } from 'react';
 import { View, FlatList, StyleSheet, TouchableHighlight, ScrollView, Image, ToastAndroid } from 'react-native';
 import globalStyles from '../../../styles/global-styles';
 /*NATIVE BASE */
-import { Avatar, Icon, IconButton, Input, Text, useDisclose, Actionsheet, HStack, Box, useToast, Stack } from 'native-base'
+import { IconButton, Input, Text, useDisclose, Actionsheet, HStack, Box, useToast, Stack } from 'native-base'
 /*ICONS*/
-import { Ionicons } from '@expo/vector-icons';
-import { Entypo } from '@expo/vector-icons';
 import { FontAwesome } from '@expo/vector-icons';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { Feather } from '@expo/vector-icons';
 import { AntDesign } from '@expo/vector-icons';
 /*FIREBASE */
-import { collection, query, getFirestore, onSnapshot, setDoc, doc, getDoc, addDoc, where } from "firebase/firestore";
+import { collection, query, getFirestore, onSnapshot, setDoc, doc, where } from "firebase/firestore";
 import { getAuth } from 'firebase/auth';
 /*COMPONENTS */
 import GroupChat from '../../../components/SelectedChatScreen/GroupChat';
@@ -25,6 +23,7 @@ const AllUsers = ({ route, navigation }) => {
     const [userNewGroupChat, setUsersNewGroupChat] = React.useState([])
     const [groupName, setGroupName] = React.useState('')
     const [groupImage, setGroupImage] = React.useState(null)
+    const [userAdded, setUserAdded] = React.useState(false)
     const { isOpen, onOpen, onClose } = useDisclose();
     const { newGroup, newChat } = route.params;
     const cameraIcon = 'https://img2.freepng.es/20180409/jiq/kisspng-camera-computer-icons-photography-clip-art-camera-icon-5acb0a3cc83729.6571769815232558688201.jpg'
@@ -43,7 +42,7 @@ const AllUsers = ({ route, navigation }) => {
             })
             setUsers(user)
         })
-              
+
         return () => {
             unsubscribe();
         };
@@ -63,25 +62,36 @@ const AllUsers = ({ route, navigation }) => {
         if (userNewGroupChat.length && groupName) {
             let usersGroup = userNewGroupChat
             usersGroup.push(actualUserId)
-            await addDoc(collection(db, 'groupIdUsers'), {
-                groupName: groupName,
-                groupPhoto: groupPhoto,
-                id: id,
-                users: usersGroup,
-                createdBy: {
-                    name: actualUserName,
-                    uid: actualUserId
+            await setDoc(doc(db, 'groupIdUsers', id), {
+                groupInfo: {
+                    groupName: groupName,
+                    groupPhoto: groupPhoto,
+                    users: usersGroup,
+                    createdBy: {
+                        name: actualUserName,
+                        uid: actualUserId
+                    },
+                    createdAt: {
+                        date: new Date().toLocaleDateString('es', { year: '2-digit' }),
+                        hour: new Date().toLocaleTimeString([], { hour12: true })
+                    }
                 },
-                createdAt: {
-                    date: new Date().toLocaleDateString('es', { year: '2-digit' }),
-                    hour: new Date().toLocaleTimeString([], { hour12: true })
+                lastMessage: {
+                    sentBy: {
+                        uid: '',
+                        userName: ''
+                    },
+                    message: '',
+                    dateSent: null,
                 }
+
             })
             navigation.navigate('GroupChatScreen', {
                 id: id,
                 groupName: groupName,
                 groupImage: groupPhoto,
                 createdBy: actualUserName,
+                groupUsers: userNewGroupChat,
                 isGroupChat: true
             })
             usersGroup = []
@@ -150,9 +160,9 @@ const AllUsers = ({ route, navigation }) => {
                             </HStack>
                             <Text fontSize="xs" mt={2} color='gray.500'>Write a name for the group and pick an image (optional)</Text>
                         </Box>
-                  
-                            {userNewGroupChat.length ? <Text fontSize="xs" mt={2} color='gray.500'>Write a name for the group and pick an image (optional)</Text> : null}
-                    
+
+                        {/*  {userAdded ? <Text fontSize="xs" mt={2} color='gray.500'>Write a name for the group and pick an image (optional)</Text> : null} */}
+
                         <Actionsheet isOpen={isOpen} onClose={onClose} hideDragIndicator>
                             <Actionsheet.Content borderTopRadius="20">
                                 <Actionsheet.Item
