@@ -16,12 +16,15 @@ function MenuOptions({ navigation }) {
                 return <IconButton
                     {...triggerProps}
                     icon={<SimpleLineIcons name="options-vertical" size={17} color="black" />}
-                    borderRadius="full"                  
+                    borderRadius="full"
                     _pressed={{
                         bg: 'gray.200'
                     }} />
             }}>
-            <Menu.Item _text={{ fontSize: 'md' }}>Profile</Menu.Item>
+            <Menu.Item
+                _text={{ fontSize: 'md' }}
+                onPress={() => navigation.navigate('Profile')}
+            >Profile</Menu.Item>
             <Menu.Item
                 _text={{ fontSize: 'md' }}
                 onPress={() => navigation.navigate('Users', {

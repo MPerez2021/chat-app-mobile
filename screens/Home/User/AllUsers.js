@@ -25,7 +25,7 @@ const AllUsers = ({ route, navigation }) => {
     const [groupImage, setGroupImage] = React.useState(null)
     const [userAdded, setUserAdded] = React.useState(false)
     const { isOpen, onOpen, onClose } = useDisclose();
-    const { newGroup, newChat } = route.params;
+    const { newGroup, newChat } = route.params;    
     const cameraIcon = 'https://img2.freepng.es/20180409/jiq/kisspng-camera-computer-icons-photography-clip-art-camera-icon-5acb0a3cc83729.6571769815232558688201.jpg'
     useEffect(() => {
         const getAllUsers = query(collection(db, 'users'), where('email', '!=', auth.currentUser.email))
@@ -57,9 +57,9 @@ const AllUsers = ({ route, navigation }) => {
     async function createNewGroup() {
         const id = uuid.v4();
         const actualUserId = auth.currentUser.uid
-        let actualUserName = auth.currentUser.displayName
-        let groupPhoto = await uploadPhotoAndGetUrl(id)
+        let actualUserName = auth.currentUser.displayName        
         if (userNewGroupChat.length && groupName) {
+            let groupPhoto = await uploadPhotoAndGetUrl(id)
             let usersGroup = userNewGroupChat
             usersGroup.push(actualUserId)
             await setDoc(doc(db, 'groupIdUsers', id), {
@@ -84,23 +84,27 @@ const AllUsers = ({ route, navigation }) => {
                     message: '',
                     dateSent: null,
                 }
-
             })
             navigation.navigate('GroupChatScreen', {
                 id: id,
                 groupName: groupName,
                 groupImage: groupPhoto,
                 createdBy: actualUserName,
-                groupUsers: userNewGroupChat,
+                groupUsers: userNewGroupChat /*revisar que no se esta usando en nada*/,
                 isGroupChat: true
             })
             usersGroup = []
-            setUsersNewGroupChat([])
-            setGroupName('')
-            setGroupImage(null)
+            test()
         }
+
+
     }
 
+    const test = () => {
+        setUsersNewGroupChat([])
+        setGroupName('')
+        setGroupImage(null) 
+    }
     async function uploadPhotoAndGetUrl(id) {
         let groupPhoto = ''
         if (groupImage) {
@@ -209,7 +213,9 @@ const AllUsers = ({ route, navigation }) => {
                                 userNewGroupChat={userNewGroupChat}
                                 name={user.name}
                                 email={user.email}
-                                photo={user.photo} />}
+                                photo={user.photo}
+                               
+                            />}
                     </View>
                 )}
             </ScrollView>

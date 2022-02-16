@@ -20,6 +20,7 @@ import GroupChatScreen from './components/GroupChatScreen';
 import MenuOptions from './components/MenuOptions';
 /*STYLES */
 import globalStyles from './styles/global-styles';
+import Profile from './screens/Home/User/Profile';
 
 
 initializeApp(firebaseConfig)
@@ -66,6 +67,7 @@ export default function App() {
               <Stack.Screen name='Chat' component={Chat} />
               <Stack.Screen name='GroupChatScreen' component={GroupChatScreen} />
               <Stack.Screen name='Users' component={AllUsers} />
+              <Stack.Screen name='Profile' component={Profile} />
             </Stack.Group>}
 
 
