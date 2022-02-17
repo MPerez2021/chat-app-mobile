@@ -1,8 +1,8 @@
 import React, { useEffect } from 'react'
-import { View, StyleSheet, Image } from 'react-native'
+import { View, StyleSheet, Image, TouchableHighlight } from 'react-native'
 import globalStyles from '../../../styles/global-styles'
 /*Native base */
-import { Box, Text, Input, Stack, VStack, Icon, HStack, KeyboardAvoidingView, IconButton, Actionsheet, useDisclose } from 'native-base'
+import { Box, Text, Input, Stack, VStack, Icon, HStack, KeyboardAvoidingView, IconButton, Actionsheet, useDisclose, Modal, Button, FormControl } from 'native-base'
 /*Firebase */
 import { getAuth, updateProfile } from "firebase/auth";
 import { getFirestore, setDoc, doc } from "firebase/firestore"
@@ -20,17 +20,20 @@ function Profile() {
     const [userName, setUserName] = React.useState('')
     const [profilePhoto, setProfilePhoto] = React.useState(null)
     const [joinedDate, setJoinedDate] = React.useState('')
-    const [updateUserNameText, setUpdateUserNameText] = React.useState(false)
+    const [cancelUpdateData, setCancelUpdateData] = React.useState(false)
+    const [showModal, setShowModal] = React.useState(false)
     const { isOpen, onOpen, onClose } = useDisclose();
+    const maxUserNameLength = 25 - userName.length
     const auth = getAuth();
     const db = getFirestore();
-
+    const initialRef = React.useRef(null)
     useEffect(() => {
         setEmail(auth.currentUser.email)
         setUserName(auth.currentUser.displayName)
         setProfilePhoto(auth.currentUser.photoURL)
         setJoinedDate(auth.currentUser.metadata.creationTime)
-    }, [])
+        setCancelUpdateData(false)
+    }, [cancelUpdateData])
 
 
     const updateUserName = () => {
@@ -96,7 +99,7 @@ function Profile() {
                 </Stack>
                 <Stack space={4} mr={10} ml={10} mt={10} justifyContent='center'>
                     <VStack>
-                        <Text fontSize={'sm'}>Email</Text>
+                        <FormControl.Label>Email</FormControl.Label>
                         <Input
                             isDisabled={true}
                             variant="underlined"
@@ -108,26 +111,30 @@ function Profile() {
                                 </Stack>
                             } />
                     </VStack>
-                    <VStack>
-                        <Text fontSize={'sm'}>Username</Text>
-                        <Input
-                            isDisabled={true}
-                            value={userName}
-                            maxLength={20}
-                            onChangeText={text => setUserName(text)}
-                            variant="underlined"
-                            fontSize={'xl'}
-                            InputLeftElement={<MaterialIcons name="alternate-email" size={15} color="gray" />}
-                            InputRightElement={
-                                <Stack mr={2}>
-                                    <MaterialCommunityIcons
-                                        name="pencil-outline"
-                                        size={20}
-                                        color="black"
-                                        onPress={() => setUpdateUserNameText(true)} />
-                                </Stack>
-                            } />
-                    </VStack>
+                    <TouchableHighlight onPress={() => setShowModal(true)} >
+                        <VStack>
+                            <FormControl.Label>Username</FormControl.Label>
+                            <Input
+                                isDisabled={true}
+                                value={userName}
+                                maxLength={20}
+                                onChangeText={text => {
+                                    setUserName(text)
+                                }}
+                                variant="underlined"
+                                fontSize={'xl'}
+                                InputLeftElement={<MaterialIcons name="alternate-email" size={15} color="gray" />}
+                                InputRightElement={
+                                    <Stack mr={2}>
+                                        <MaterialCommunityIcons
+                                            name="pencil-outline"
+                                            size={20}
+                                            color="black"
+                                        />
+                                    </Stack>
+                                } />
+                        </VStack>
+                    </TouchableHighlight>
                     <HStack alignItems={'center'} justifyContent={'space-between'} bg={'muted.100'} shadow={'2'} padding={4}>
                         <Text fontSize={'sm'}>Change Password</Text>
                         <Icon
@@ -136,65 +143,103 @@ function Profile() {
                         />
                     </HStack>
                 </Stack>
-                <Box marginTop={'auto'} ml={10} mb={10}>
-                    <Text>Joined {joinedDate}</Text>
-                </Box>
-
-                {/* Action SHeet */}
-                <Actionsheet isOpen={isOpen} onClose={onClose} hideDragIndicator>
-                    <Actionsheet.Content borderTopRadius="20">
-                        <HStack width={'100%'} p={3} justifyContent={'space-between'} alignItems={'center'}>
-                            <Text fontSize={'lg'} bold>Profile foto</Text>
-                            <Icon
-                                as={<FontAwesome5 name="trash" />}
-                                color='#a1a1aa'
-                                size={5}
-                            />
-                        </HStack>
-                        <HStack width={'100%'} >
-                            <Actionsheet.Item
-                                borderRadius={'15'}
-                                width={'auto'}
-                                height={'auto'}
-                                onPress={() => pickPhotoFromLibary()}>
-                                <VStack alignItems={'center'}>
-                                    <Box borderColor={'gray.200'}
-                                        borderWidth={1}
-                                        borderRadius={'full'}
-                                        p={3}>
-                                        <Icon
-                                            as={<Entypo name="images" />}
-                                            color='black'
-                                            size={5}
-                                            w={'100%'}
-                                        />
-                                    </Box>
-                                    <Text fontSize={'md'}>Gallery</Text>
-                                </VStack>
-                            </Actionsheet.Item>
-                            <Actionsheet.Item
-                                borderRadius={'15'}
-                                width={'auto'}
-                                height={'auto'}
-                                onPress={() => photoWithCamera()}>
-                                <VStack alignItems={'center'}>
-                                    <Box borderColor={'gray.200'}
-                                        borderWidth={1}
-                                        borderRadius={'full'}
-                                        p={3}>
-                                        <Icon
-                                            as={<Feather name="camera" />}
-                                            color='black'
-                                            size={5}
-                                        />
-                                    </Box>
-                                    <Text fontSize={'md'}>Camera</Text>
-                                </VStack>
-                            </Actionsheet.Item>
-                        </HStack>
-                    </Actionsheet.Content>
-                </Actionsheet>
+                {/*  <Box marginTop={'auto'} ml={10} mb={10}>
+                <Text>Joined {joinedDate}</Text>
+            </Box> */}
             </KeyboardAvoidingView>
+            {/* Action SHeet */}
+            <Actionsheet isOpen={isOpen} onClose={onClose} hideDragIndicator>
+                <Actionsheet.Content borderTopRadius="20">
+                    <HStack width={'100%'} p={3} justifyContent={'space-between'} alignItems={'center'}>
+                        <Text fontSize={'lg'} bold>Profile foto</Text>
+                        <Icon
+                            as={<FontAwesome5 name="trash" />}
+                            color='#a1a1aa'
+                            size={5}
+                        />
+                    </HStack>
+                    <HStack width={'100%'} >
+                        <Actionsheet.Item
+                            borderRadius={'15'}
+                            width={'auto'}
+                            height={'auto'}
+                            onPress={() => pickPhotoFromLibary()}>
+                            <VStack alignItems={'center'}>
+                                <Box borderColor={'gray.200'}
+                                    borderWidth={1}
+                                    borderRadius={'full'}
+                                    p={3}>
+                                    <Icon
+                                        as={<Entypo name="images" />}
+                                        color='black'
+                                        size={5}
+                                        w={'100%'}
+                                    />
+                                </Box>
+                                <Text fontSize={'md'}>Gallery</Text>
+                            </VStack>
+                        </Actionsheet.Item>
+                        <Actionsheet.Item
+                            borderRadius={'15'}
+                            width={'auto'}
+                            height={'auto'}
+                            onPress={() => photoWithCamera()}>
+                            <VStack alignItems={'center'}>
+                                <Box borderColor={'gray.200'}
+                                    borderWidth={1}
+                                    borderRadius={'full'}
+                                    p={3}>
+                                    <Icon
+                                        as={<Feather name="camera" />}
+                                        color='black'
+                                        size={5}
+                                    />
+                                </Box>
+                                <Text fontSize={'md'}>Camera</Text>
+                            </VStack>
+                        </Actionsheet.Item>
+                    </HStack>
+                </Actionsheet.Content>
+            </Actionsheet>
+
+            {/*MODAL FOR EDIT USERNAME */}
+            <Modal isOpen={showModal} onClose={() => {
+                setShowModal(false)
+                setCancelUpdateData(true)
+                }} justifyContent="flex-end" size="full" initialFocusRef={initialRef}>
+                <Modal.Content>
+                    <Modal.CloseButton />
+                    <Modal.Header>Write your username</Modal.Header>
+                    <Modal.Body>
+                        <Input
+                            value={userName}
+                            maxLength={25}
+                            onChangeText={text => setUserName(text)}
+                            ref={initialRef}
+                            variant="underlined"
+                            fontSize={'md'}
+                            InputRightElement={<Text>{maxUserNameLength}</Text>}
+                        />
+                    </Modal.Body>
+                    <Modal.Footer>
+                        <Button.Group space={2}>
+                            <Button variant="ghost" colorScheme="blueGray" onPress={() => {
+                                setShowModal(false);                                
+                                setCancelUpdateData(true)
+                            }}>
+                                Cancel
+                            </Button>
+                            <Button onPress={() => {
+                                updateUserName()
+                                setShowModal(false);
+                            }}>
+                                Save
+                            </Button>
+                        </Button.Group>
+                    </Modal.Footer>
+                </Modal.Content>
+            </Modal>
+
 
         </View >
     )
