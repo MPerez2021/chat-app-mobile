@@ -45,11 +45,15 @@ async function uploadPhotoToStorage(folderName, uri, emailOrId, subFolder) {
         xhr.open('GET', uri, true);
         xhr.send(null);
     });
-
-    let imageUrl = uri.split("/ImagePicker/")
+    /*Regular Expression for getting everything after last slash */
+    let imageUrl = uri.split(/([^\/]+$)/g)
+    const metadata = {
+        contentType: 'image/jpeg',
+    };
     const refR = ref(getStorage(), `${folderName}/` + emailOrId + `/${subFolder}/` + imageUrl[1])
-    const result = await uploadBytes(refR, blob)
+    const result = await uploadBytes(refR, blob, metadata)
     blob.close();
     return getDownloadURL(refR)
 }
+
 export { uploadPhotoToStorage, pickImage, takePhotoWithCamera }

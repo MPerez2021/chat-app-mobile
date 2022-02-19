@@ -1,11 +1,16 @@
 import React, { useEffect } from 'react'
-import { View, StyleSheet, Image, TouchableHighlight } from 'react-native'
-import globalStyles from '../../../styles/global-styles'
+import { View, StyleSheet, Image, TouchableHighlight, ToastAndroid } from 'react-native'
+import globalStyles from '../../../../styles/global-styles'
 /*Native base */
-import { Box, Text, Input, Stack, VStack, Icon, HStack, KeyboardAvoidingView, IconButton, Actionsheet, useDisclose, Modal, Button, FormControl } from 'native-base'
+import {
+    Box, Text, Input, Stack, VStack, Icon, HStack, KeyboardAvoidingView,
+    IconButton, Actionsheet, useDisclose, Modal, Button, FormControl,
+    AlertDialog
+} from 'native-base'
 /*Firebase */
-import { getAuth, updateProfile } from "firebase/auth";
+import { getAuth, updateProfile, updateEmail } from "firebase/auth";
 import { getFirestore, setDoc, doc } from "firebase/firestore"
+import { getStorage, getDownloadURL, ref } from "firebase/storage"
 /*Icons */
 import { MaterialIcons } from '@expo/vector-icons';
 import { Feather } from '@expo/vector-icons';
@@ -13,17 +18,20 @@ import { FontAwesome } from '@expo/vector-icons';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { Entypo } from '@expo/vector-icons';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { pickImage, takePhotoWithCamera, uploadPhotoToStorage } from '../../../services/UploadImages';
-function Profile() {
+import { pickImage, takePhotoWithCamera, uploadPhotoToStorage } from '../../../../services/UploadImages';
+function Profile({ navigation }) {
 
     const [email, setEmail] = React.useState('')
     const [userName, setUserName] = React.useState('')
     const [profilePhoto, setProfilePhoto] = React.useState(null)
     const [joinedDate, setJoinedDate] = React.useState('')
     const [cancelUpdateData, setCancelUpdateData] = React.useState(false)
+    const [openDeletePhotoModal, setOpenDeletePhotoModal] = React.useState(false)
     const [showModal, setShowModal] = React.useState(false)
     const { isOpen, onOpen, onClose } = useDisclose();
+    const cancelRef = React.useRef(null);
     const maxUserNameLength = 25 - userName.length
+    const defaultPhoto = 'https://firebasestorage.googleapis.com/v0/b/chat-app-mobile-8a229.appspot.com/o/userDefaultPhoto%2Fdefault-avatar-profile.jpg?alt=media&token=546e23c0-4444-4f38-83b9-2b19491d11ba'
     const auth = getAuth();
     const db = getFirestore();
     const initialRef = React.useRef(null)
@@ -45,7 +53,8 @@ function Profile() {
         })
     }
 
-    const pickPhotoFromLibary = async () => {
+  
+    const updatePhotoProfileFromLibrary = async () => {
         onClose();
         let image = await pickImage();
         if (image) {
@@ -55,12 +64,14 @@ function Profile() {
             }, { merge: true })
             updateProfile(auth.currentUser, {
                 photoURL: updatedPhoto
+            }).then(() => {
+                ToastAndroid.show('Updated profile photo', ToastAndroid.SHORT)
             })
             setProfilePhoto(updatedPhoto)
         }
     }
 
-    const photoWithCamera = async () => {
+    const updatePhotoProfileWithCamera = async () => {
         onClose();
         let image = await takePhotoWithCamera();
         if (image) {
@@ -70,10 +81,30 @@ function Profile() {
             }, { merge: true })
             updateProfile(auth.currentUser, {
                 photoURL: updatedPhoto
+            }).then(() => {
+                ToastAndroid.show('Updated profile photo', ToastAndroid.SHORT)
             })
             setProfilePhoto(updatedPhoto)
         }
     }
+
+    const deleteProfilePhoto = async () => {
+        const refR = ref(getStorage(), 'userDefaultPhoto/default-avatar-profile.jpg')
+        const defaultPhoto = await getDownloadURL(refR)
+        if (profilePhoto !== defaultPhoto) {
+            setDoc(doc(db, 'users', auth.currentUser.uid), {
+                profilePhoto: defaultPhoto
+            }, { merge: true })
+            updateProfile(auth.currentUser, {
+                photoURL: defaultPhoto
+            }).then(() => {
+                ToastAndroid.show('Deleted profile photo', ToastAndroid.SHORT)
+            })
+            setProfilePhoto(defaultPhoto)
+            setOpenDeletePhotoModal(false)
+        }
+    }
+
     return (
         <View style={styles.container}>
             <KeyboardAvoidingView behavior="padding">
@@ -100,16 +131,18 @@ function Profile() {
                 <Stack space={4} mr={10} ml={10} mt={10} justifyContent='center'>
                     <VStack>
                         <FormControl.Label>Email</FormControl.Label>
-                        <Input
-                            isDisabled={true}
-                            variant="underlined"
-                            value={email}
-                            fontSize={'xl'}
-                            InputRightElement={
-                                <Stack mr={2}>
-                                    <MaterialCommunityIcons name="pencil-outline" size={20} color="black" />
-                                </Stack>
-                            } />
+                        <TouchableHighlight onPress={() => navigation.navigate('Verify Account')}>
+                            <Input
+                                isDisabled={true}
+                                variant="underlined"
+                                value={email}
+                                fontSize={'xl'}
+                                InputRightElement={
+                                    <Stack mr={2}>
+                                        <MaterialCommunityIcons name="pencil-outline" size={20} color="black" />
+                                    </Stack>
+                                } />
+                        </TouchableHighlight>
                     </VStack>
                     <TouchableHighlight onPress={() => setShowModal(true)} >
                         <VStack>
@@ -152,18 +185,23 @@ function Profile() {
                 <Actionsheet.Content borderTopRadius="20">
                     <HStack width={'100%'} p={3} justifyContent={'space-between'} alignItems={'center'}>
                         <Text fontSize={'lg'} bold>Profile foto</Text>
-                        <Icon
+                        {profilePhoto !== defaultPhoto ? <Icon
+                            onPress={() => {
+                                onClose();
+                                setOpenDeletePhotoModal(true)
+                            }}
                             as={<FontAwesome5 name="trash" />}
                             color='#a1a1aa'
                             size={5}
-                        />
+                        /> : null}
+
                     </HStack>
                     <HStack width={'100%'} >
                         <Actionsheet.Item
                             borderRadius={'15'}
                             width={'auto'}
                             height={'auto'}
-                            onPress={() => pickPhotoFromLibary()}>
+                            onPress={() => updatePhotoProfileFromLibrary()}>
                             <VStack alignItems={'center'}>
                                 <Box borderColor={'gray.200'}
                                     borderWidth={1}
@@ -183,7 +221,7 @@ function Profile() {
                             borderRadius={'15'}
                             width={'auto'}
                             height={'auto'}
-                            onPress={() => photoWithCamera()}>
+                            onPress={() => updatePhotoProfileWithCamera()}>
                             <VStack alignItems={'center'}>
                                 <Box borderColor={'gray.200'}
                                     borderWidth={1}
@@ -206,7 +244,7 @@ function Profile() {
             <Modal isOpen={showModal} onClose={() => {
                 setShowModal(false)
                 setCancelUpdateData(true)
-                }} justifyContent="flex-end" size="full" initialFocusRef={initialRef}>
+            }} justifyContent="flex-end" size="full" initialFocusRef={initialRef}>
                 <Modal.Content>
                     <Modal.CloseButton />
                     <Modal.Header>Write your username</Modal.Header>
@@ -224,7 +262,7 @@ function Profile() {
                     <Modal.Footer>
                         <Button.Group space={2}>
                             <Button variant="ghost" colorScheme="blueGray" onPress={() => {
-                                setShowModal(false);                                
+                                setShowModal(false);
                                 setCancelUpdateData(true)
                             }}>
                                 Cancel
@@ -239,8 +277,26 @@ function Profile() {
                     </Modal.Footer>
                 </Modal.Content>
             </Modal>
-
-
+            {/*Modal for delete user profile photo */}
+            <AlertDialog isOpen={openDeletePhotoModal} onClose={() => setOpenDeletePhotoModal(false)}>
+                <AlertDialog.Content>
+                    <AlertDialog.Body p={5}>
+                        <Text fontSize={'md'}>Delete profile photo?</Text>
+                        <Button.Group space={2} mt={4} justifyContent={'flex-end'}>
+                            <Button
+                                variant="unstyled"
+                                colorScheme="coolGray"
+                                onPress={() => setOpenDeletePhotoModal(false)}
+                                ref={cancelRef}>
+                                Cancel
+                            </Button>
+                            <Button colorScheme="danger" onPress={() => deleteProfilePhoto()}>
+                                Delete
+                            </Button>
+                        </Button.Group>
+                    </AlertDialog.Body>
+                </AlertDialog.Content>
+            </AlertDialog>
         </View >
     )
 }
