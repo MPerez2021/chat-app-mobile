@@ -9,11 +9,12 @@ import { getAuth, reauthenticateWithCredential, EmailAuthProvider } from "fireba
 import { FontAwesome5 } from '@expo/vector-icons';
 import { MaterialIcons } from "@expo/vector-icons";
 
-function VerifyAccount({navigation}) {
+function VerifyAccount({ navigation, route }) {
     const [email, setEmail] = React.useState('')
     const [password, setPassword] = React.useState('')
     const [showPassword, setShowPassword] = React.useState(false);
     const [errors, setErrors] = React.useState('');
+    const { updateEmail } = route.params;
     const auth = getAuth();
 
     const promptForCredentials = () => {
@@ -22,11 +23,17 @@ function VerifyAccount({navigation}) {
 
     const validateUserAccount = () => {
         const credentials = promptForCredentials()
+        let screenName = 'Update Password'
+        if (updateEmail) {
+            screenName = 'Update Email'
+        }
+
         reauthenticateWithCredential(auth.currentUser, credentials).then(() => {
             setErrors('')
-            navigation.navigate('Update Email')
+            setEmail('')
+            setPassword('')
+            navigation.navigate(screenName)
         }).catch(error => {
-            console.log(error.code);
             controlFormErrors(error)
         })
     }

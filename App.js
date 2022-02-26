@@ -23,8 +23,9 @@ import globalStyles from './styles/global-styles';
 import Profile from './screens/Home/User/Profile/Profile';
 import VerifyAccount from './screens/Home/User/Profile/VerifyAccount';
 import UpdateEmail from './screens/Home/User/Profile/UpdateEmail';
+import UpdatePassword from './screens/Home/User/Profile/UpdatePassword';
 
-
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 initializeApp(firebaseConfig)
 const Stack = createNativeStackNavigator();
 
@@ -49,7 +50,8 @@ export default function App() {
       <NavigationContainer>
         <Stack.Navigator>
           {!userLogged ?
-            <Stack.Group>
+            <Stack.Group
+              screenOptions={{ headerShown: false }}>
               <Stack.Screen
                 name='Login'
                 component={Login}
@@ -72,12 +74,12 @@ export default function App() {
               <Stack.Screen name='Profile' component={Profile} />
               <Stack.Screen name='Verify Account' component={VerifyAccount} />
               <Stack.Screen name='Update Email' component={UpdateEmail} />
+              <Stack.Screen name='Update Password' component={UpdatePassword} />
             </Stack.Group>}
-
-
         </Stack.Navigator>
       </NavigationContainer>
     </NativeBaseProvider>
+
   );
 }
 

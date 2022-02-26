@@ -1,4 +1,4 @@
-import React, { useEffect, useLayoutEffect } from 'react'
+import React, { useEffect, useLayoutEffect, useRef } from 'react'
 import { View, StyleSheet, FlatList } from 'react-native'
 import { Input, Icon, Avatar, Actionsheet, useDisclose, Button, Text, Box, NativeBaseProvider, HStack } from 'native-base'
 import globalStyles from '../styles/global-styles'
@@ -20,9 +20,11 @@ const Chat = ({ route, navigation }) => {
     const auth = getAuth()
     const { friendName, friendId, actualUserUid, profilePhoto, actualUserPhoto, actualUserName } = route.params;
     const [messageInputValue, setMessageInputValue] = React.useState('')
-    const [messages, setMessages] = React.useState([])    
+    const [messages, setMessages] = React.useState([])
     const { isOpen, onOpen, onClose } = useDisclose();
     const id = actualUserUid > friendId ? `${actualUserUid + friendId}` : `${friendId + actualUserUid}`
+    let flatList = useRef(null)
+    const [offset, SetOffset] = React.useState(0);
     useEffect(() => {
         const chatRef = query(collection(db, 'chats', id, 'chat'), orderBy('sentAt.date', 'asc'), orderBy('sentAt.hour', 'asc'))
         const unsubcribe = onSnapshot(chatRef, querySnapshot => {
@@ -85,7 +87,7 @@ const Chat = ({ route, navigation }) => {
                     text: messageInputValue,
                     dateSent: new Date().toLocaleDateString('es', { year: '2-digit' }),
                 },
-                
+
             })
         }
     }
@@ -93,7 +95,7 @@ const Chat = ({ route, navigation }) => {
     async function handleLibaryPhotosMessages() {
         onClose()
         let image = await pickImage()
-        let imageFromStorage = await uploadPhotoToStorage('users',image, auth.currentUser.email, 'sentPhotos')
+        let imageFromStorage = await uploadPhotoToStorage('users', image, auth.currentUser.email, 'sentPhotos')
         await addDoc(collection(db, 'chats', id, 'chat'), {
             sentBy: actualUserUid,
             recievedBy: friendId,
@@ -125,7 +127,7 @@ const Chat = ({ route, navigation }) => {
     async function handleCameraPhotosMessage() {
         onClose()
         let photo = await takePhotoWithCamera()
-        let imageFromStorage = await uploadPhotoToStorage('users',photo, auth.currentUser.email, 'sentPhotos')
+        let imageFromStorage = await uploadPhotoToStorage('users', photo, auth.currentUser.email, 'sentPhotos')
         await addDoc(collection(db, 'chats', id, 'chat'), {
             sentBy: actualUserUid,
             recievedBy: friendId,
@@ -158,9 +160,24 @@ const Chat = ({ route, navigation }) => {
         <View style={styles.container}>
             <FlatList
                 data={messages}
+                ref={ref => flatList = ref}
+                /* onScroll={(event) => {                    
+                    let currentOffset = event.nativeEvent.contentOffset.y;                 
+                    let direction = currentOffset > offset ? 'down' : 'up';
+                    SetOffset(currentOffset);
+                    console.log(direction); // up or down accordingly
+                }} */
+                //initialNumToRender={messages.length}
+                //onContentSizeChange={() => flatList.scrollToEnd({ animated: true })}
                 renderItem={({ item }) =>
                     <ChatBox message={item.message} actualUserUid={actualUserUid} sentBy={item.sentBy} sentHour={item.sentAt.hour} />
                 }
+
+                /* getItemLayout={(data, index) => (
+                    { length: 100, offset: 100 * index, index }
+                )}
+                initialScrollIndex={messages.length - 1} */
+                //onLayout={() => flatList.scrollToEnd({ animated: false })}
                 keyExtractor={item => item.messageId}
             />
             <Box ml={2} mr={2} mt={2} mb={4} bg={'white'} borderRadius={'50'}>

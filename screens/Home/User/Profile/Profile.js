@@ -53,7 +53,7 @@ function Profile({ navigation }) {
         })
     }
 
-  
+
     const updatePhotoProfileFromLibrary = async () => {
         onClose();
         let image = await pickImage();
@@ -131,7 +131,10 @@ function Profile({ navigation }) {
                 <Stack space={4} mr={10} ml={10} mt={10} justifyContent='center'>
                     <VStack>
                         <FormControl.Label>Email</FormControl.Label>
-                        <TouchableHighlight onPress={() => navigation.navigate('Verify Account')}>
+                        <TouchableHighlight onPress={() =>
+                            navigation.navigate('Verify Account', {
+                                updateEmail: true                              
+                            })}>
                             <Input
                                 isDisabled={true}
                                 variant="underlined"
@@ -168,13 +171,17 @@ function Profile({ navigation }) {
                                 } />
                         </VStack>
                     </TouchableHighlight>
-                    <HStack alignItems={'center'} justifyContent={'space-between'} bg={'muted.100'} shadow={'2'} padding={4}>
-                        <Text fontSize={'sm'}>Change Password</Text>
-                        <Icon
-                            as={<Feather name="arrow-right" />}
-                            size={5}
-                        />
-                    </HStack>
+                    <TouchableHighlight onPress={() => navigation.navigate('Verify Account', {
+                        updateEmail: false                       
+                    })}>
+                        <HStack alignItems={'center'} justifyContent={'space-between'} bg={'muted.100'} shadow={'2'} padding={4}>
+                            <Text fontSize={'sm'}>Change Password</Text>
+                            <Icon
+                                as={<Feather name="arrow-right" />}
+                                size={5}
+                            />
+                        </HStack>
+                    </TouchableHighlight>
                 </Stack>
                 {/*  <Box marginTop={'auto'} ml={10} mb={10}>
                 <Text>Joined {joinedDate}</Text>

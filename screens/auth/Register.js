@@ -1,5 +1,5 @@
 import React from 'react'
-import { View, StyleSheet, Platform, Image } from 'react-native'
+import { View, StyleSheet, Platform, Image, ScrollView } from 'react-native'
 import { useFocusEffect } from '@react-navigation/core';
 /*NATIVE BASE */
 import { Text, Center, Input, Icon, Stack, Button, Flex, KeyboardAvoidingView, Avatar, FormControl, Modal, HStack, Spinner } from 'native-base';
@@ -16,6 +16,7 @@ import { MaterialIcons } from "@expo/vector-icons";
 import { Feather } from '@expo/vector-icons';
 import { SimpleLineIcons } from '@expo/vector-icons';
 import { AntDesign } from '@expo/vector-icons';
+import { SafeAreaView } from 'react-native-safe-area-context';
 const Register = ({ navigation }) => {
     const [email, setEmail] = React.useState("")
     const [password, setPassword] = React.useState("");
@@ -60,7 +61,7 @@ const Register = ({ navigation }) => {
                         displayName: fullName,
                         photoURL: userProfilePhoto
                     })
-                })               
+                })
                 setIsLoading(false)
                 setShowModal(true)
             }).catch(error => {
@@ -169,161 +170,159 @@ const Register = ({ navigation }) => {
     }
 
     return (
-        <View style={styles.container}>
-            <KeyboardAvoidingView behavior="padding">
-                <FormControl isRequired isInvalid={showError}>
-                    <Center>
-                        <View style={styles.image}>
-                            {image ?
-                                <Image source={{ uri: image }} style={styles.profileImage} />
-                                : <Avatar
-                                    alignSelf="center"
-                                    width="200"
-                                    bg={'light.200'}
-                                    height="200"
-                                    onTouchStart={pickImage}
-                                >
-                                    {<Text fontSize={'3xl'}>Add a photo</Text>}
-                                </Avatar>}
-                            <View style={styles.addPhotoButton}>
-                                <Button
-                                    leftIcon={<Feather name="camera" size={24} color="white" />}
-                                    style={{ backgroundColor: '#000' }}
-                                    onPress={pickImage} />
+        <SafeAreaView style={styles.container}>
+            <View>
+                <ScrollView keyboardShouldPersistTaps='handled'>
+                    <FormControl isRequired isInvalid={showError}>
+                        <Center>
+                            <View style={styles.image}>
+                                {image ?
+                                    <Image source={{ uri: image }} style={styles.profileImage} />
+                                    : <Avatar
+                                        alignSelf="center"
+                                        width="200"
+                                        bg={'light.200'}
+                                        height="200"
+                                        onTouchStart={pickImage}
+                                    >
+                                        {<Text fontSize={'3xl'}>Add a photo</Text>}
+                                    </Avatar>}
+                                <View style={styles.addPhotoButton}>
+                                    <Button
+                                        leftIcon={<Feather name="camera" size={24} color="white" />}
+                                        style={{ backgroundColor: '#000' }}
+                                        onPress={pickImage} />
+                                </View>
                             </View>
-                        </View>
-                        {showError ?
-                            <FormControl.ErrorMessage _text={{ fontSize: 'xs', color: 'error.500', fontWeight: 500 }} >
-                                {errors.image}
-                            </FormControl.ErrorMessage>
-                            : null}
-                    </Center>
-
-                    <Stack space={4} w="100%" alignItems="center" mt={5}>
-                        <View>
-                            <Input
-                                w={{
-                                    base: "80%",
-                                    md: "20%",
-                                }}
-                                variant={"underlined"}
-                                type="text"
-                                placeholder="Full name"
-                                value={fullName}
-                                size="lg"
-                                onChangeText={text => setFullName(text)}
-                                InputLeftElement={<Icon
-                                    as={<SimpleLineIcons name="user" />}
-                                    size={5}
-                                    ml={2}
-                                    color="muted.400"
-                                />} />
                             {showError ?
                                 <FormControl.ErrorMessage _text={{ fontSize: 'xs', color: 'error.500', fontWeight: 500 }} >
-                                    {errors.fullName}
+                                    {errors.image}
                                 </FormControl.ErrorMessage>
                                 : null}
-                        </View>
-                        <View>
-                            <Input
-                                w={{
-                                    base: "80%",
-                                    md: "20%",
-                                }}
-                                variant={"underlined"}
-                                type="text"
-                                placeholder="Email"
-                                value={email}
-                                size="lg"
-                                onChangeText={text => setEmail(text)}
-                                InputLeftElement={<Icon
-                                    as={<Entypo name="email" />}
-                                    size={5}
-                                    ml={2}
-                                    color="muted.400"
-                                />} />
-                            {showError ?
-                                <FormControl.ErrorMessage _text={{ fontSize: 'xs', color: 'error.500', fontWeight: 500 }} >
-                                    {errors.email}
-                                </FormControl.ErrorMessage>
-                                : null}
-                        </View>
-                        <View>
-                            <Input
-                                w={{
-                                    base: "80%",
-                                    md: "20%",
-                                }}
-                                variant={"underlined"}
-                                type={showPassword ? "text" : "password"}
-                                placeholder="Password"
-                                value={password}
-                                size="lg"
-                                onChangeText={text => setPassword(text)}
-                                InputLeftElement={<Icon
-                                    as={<Feather name="lock" />}
-                                    size={5}
-                                    ml={2}
-                                    color="muted.400"
-                                />}
-                                InputRightElement={<Icon
-                                    onPress={handleShowPassword}
-                                    as={showPassword ? <MaterialIcons name="visibility" /> : <MaterialIcons name="visibility-off" />}
-                                    size={5}
-                                    mr={2}
-                                    color="muted.400"
-                                />} />
-                            {showError ?
-                                <FormControl.ErrorMessage _text={{ fontSize: 'xs', color: 'error.500', fontWeight: 500 }} >
-                                    {errors.password}
-                                </FormControl.ErrorMessage>
-                                : null}
-                        </View>
-                        {isLoading ? <Spinner size="sm" /> : <Button colorScheme='info' w={{ base: "80%", md: "20%" }} onPress={registerUser}>
-                            Continue
-                        </Button>}
+                        </Center>
+                        <Stack space={4} w="100%" alignItems="center" mt={5} flex={1}>
+                            <KeyboardAvoidingView behavior="padding">
+                                <Stack space={4} w="100%">
+                                    <Input
+                                        w={{
+                                            base: "80%",
+                                            md: "20%",
+                                        }}
+                                        variant={"underlined"}
+                                        type="text"
+                                        placeholder="Full name"
+                                        value={fullName}
+                                        size="lg"
+                                        onChangeText={text => setFullName(text)}
+                                        InputLeftElement={<Icon
+                                            as={<SimpleLineIcons name="user" />}
+                                            size={5}
+                                            ml={2}
+                                            color="muted.400"
+                                        />} />
+                                    {showError ?
+                                        <FormControl.ErrorMessage _text={{ fontSize: 'xs', color: 'error.500', fontWeight: 500 }} >
+                                            {errors.fullName}
+                                        </FormControl.ErrorMessage>
+                                        : null}
+                                    <Input
+                                        w={{
+                                            base: "80%",
+                                            md: "20%",
+                                        }}
+                                        variant={"underlined"}
+                                        type="text"
+                                        placeholder="Email"
+                                        value={email}
+                                        size="lg"
+                                        onChangeText={text => setEmail(text)}
+                                        InputLeftElement={<Icon
+                                            as={<Entypo name="email" />}
+                                            size={5}
+                                            ml={2}
+                                            color="muted.400"
+                                        />} />
+                                    {showError ?
+                                        <FormControl.ErrorMessage _text={{ fontSize: 'xs', color: 'error.500', fontWeight: 500 }} >
+                                            {errors.email}
+                                        </FormControl.ErrorMessage>
+                                        : null}
+                                    <Input
+                                        w={{
+                                            base: "80%",
+                                            md: "20%",
+                                        }}
+                                        variant={"underlined"}
+                                        type={showPassword ? "text" : "password"}
+                                        placeholder="Password"
+                                        value={password}
+                                        size="lg"
+                                        onChangeText={text => setPassword(text)}
+                                        InputLeftElement={<Icon
+                                            as={<Feather name="lock" />}
+                                            size={5}
+                                            ml={2}
+                                            color="muted.400"
+                                        />}
+                                        InputRightElement={<Icon
+                                            onPress={handleShowPassword}
+                                            as={showPassword ? <MaterialIcons name="visibility" /> : <MaterialIcons name="visibility-off" />}
+                                            size={5}
+                                            mr={2}
+                                            color="muted.400"
+                                        />} />
+                                    {showError ?
+                                        <FormControl.ErrorMessage _text={{ fontSize: 'xs', color: 'error.500', fontWeight: 500 }} >
+                                            {errors.password}
+                                        </FormControl.ErrorMessage>
+                                        : null}
+                                </Stack>
+                            </KeyboardAvoidingView>
+                            {isLoading ? <Spinner size="sm" /> : <Button colorScheme='info' w={{ base: "80%", md: "20%" }} onPress={registerUser}>
+                                Continue
+                            </Button>}
+                            <Flex direction='row'>
+                                <Text color={'grey'} mr={2} mb={4}>Joined us before?</Text>
+                                <Text color={'blue.600'} bold={true} onPress={() => navigation.navigate('Login')}>Login</Text>
+                            </Flex>
+                        </Stack>
+                    </FormControl>
+                    <Modal isOpen={showModal} onClose={() => setShowModal(false)} size={"lg"} closeOnOverlayClick={false}>
+                        <Modal.Content >
+                            <Modal.CloseButton />
+                            <Modal.Body>
+                                <HStack alignItems={"center"} mt={3}>
+                                    <AntDesign name="checkcircleo" size={24} color="white" style={{ backgroundColor: '#20a779', borderRadius: 50, marginRight: 5 }} />
+                                    <Text fontSize="md" pt={3} pr={3} pb={3}>User {fullName}, register successfully, please login to continue.</Text>
+                                </HStack>
+                                <Button.Group space={1} justifyContent={"flex-end"}>
+                                    <Button
+                                        variant="ghost"
+                                        colorScheme="blueGray"
+                                        onPress={() => {
+                                            setShowModal(false)
+                                        }}
+                                    >
+                                        Cancel
+                                    </Button>
+                                    <Button
+                                        colorScheme='blue'
+                                        endIcon={<AntDesign name="arrowright" size={15} color="white" />}
+                                        onPress={() => {
+                                            navigation.navigate("Login")
+                                            setShowModal(false)
+                                        }}
+                                    >
+                                        Log In
+                                    </Button>
+                                </Button.Group>
+                            </Modal.Body>
+                        </Modal.Content>
+                    </Modal>
+                </ScrollView>
 
-                        <Flex direction='row'>
-                            <Text color={'grey'} mr={2} >Joined us before?</Text>
-                            <Text color={'blue.600'} bold={true} onPress={() => navigation.navigate('Login')}>Login</Text>
-                        </Flex>
-                    </Stack>
-                </FormControl>
-                <Modal isOpen={showModal} onClose={() => setShowModal(false)} size={"lg"} closeOnOverlayClick={false}>
-                    <Modal.Content >
-                        <Modal.CloseButton />
-                        <Modal.Body>
-                            <HStack alignItems={"center"} mt={3}>
-                                <AntDesign name="checkcircleo" size={24} color="white" style={{ backgroundColor: '#20a779', borderRadius: 50, marginRight: 5 }} />
-                                <Text fontSize="md" pt={3} pr={3} pb={3}>User {fullName}, register successfully, please login to continue.</Text>
-                            </HStack>
-                            <Button.Group space={1} justifyContent={"flex-end"}>
-                                <Button
-                                    variant="ghost"
-                                    colorScheme="blueGray"
-                                    onPress={() => {
-                                        setShowModal(false)
-                                    }}
-                                >
-                                    Cancel
-                                </Button>
-                                <Button
-                                    colorScheme='blue'
-                                    endIcon={<AntDesign name="arrowright" size={15} color="white" />}
-                                    onPress={() => {
-                                        navigation.navigate("Login")
-                                        setShowModal(false)
-                                    }}
-                                >
-                                    Log In
-                                </Button>
-                            </Button.Group>
-                        </Modal.Body>
-                    </Modal.Content>
-                </Modal>
-            </KeyboardAvoidingView>
-        </View >
-
+            </View >
+        </SafeAreaView >
 
     )
 }
