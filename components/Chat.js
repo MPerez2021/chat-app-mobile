@@ -1,6 +1,6 @@
 import React, { useEffect, useLayoutEffect, useRef } from 'react'
 import { View, StyleSheet, FlatList } from 'react-native'
-import { Input, Icon, Avatar, Actionsheet, useDisclose, Button, Text, Box, NativeBaseProvider, HStack } from 'native-base'
+import { Input, Icon, Avatar, Actionsheet, useDisclose, Box, IconButton } from 'native-base'
 import globalStyles from '../styles/global-styles'
 /*FIREBASE */
 import { onSnapshot, doc, getFirestore, addDoc, collection, query, orderBy, setDoc, where, getDocs, arrayUnion } from "firebase/firestore";
@@ -20,16 +20,21 @@ const Chat = ({ route, navigation }) => {
     const auth = getAuth()
     const { friendName, friendId, actualUserUid, profilePhoto, actualUserPhoto, actualUserName } = route.params;
     const [messageInputValue, setMessageInputValue] = React.useState('')
+    const [sentBy, setSentBy] = React.useState('')
     const [messages, setMessages] = React.useState([])
     const { isOpen, onOpen, onClose } = useDisclose();
     const id = actualUserUid > friendId ? `${actualUserUid + friendId}` : `${friendId + actualUserUid}`
+    const [offset, setOffset] = React.useState(0);
+    const [position, setPosition] = React.useState(0)
+    const [showScrollButtom, setShowScrollButton] = React.useState(false)
     let flatList = useRef(null)
-    const [offset, SetOffset] = React.useState(0);
+
     useEffect(() => {
         const chatRef = query(collection(db, 'chats', id, 'chat'), orderBy('sentAt.date', 'asc'), orderBy('sentAt.hour', 'asc'))
         const unsubcribe = onSnapshot(chatRef, querySnapshot => {
             let msgs = []
             querySnapshot.forEach(data => {
+                setSentBy(data.data().sentBy)
                 let msg = {
                     messageId: data.id,
                     message: data.data().message,
@@ -42,13 +47,17 @@ const Chat = ({ route, navigation }) => {
                 }
                 msgs.push(msg)
             })
+            setPosition(msgs.length - 1)
             setMessages(msgs)
+            setShowScrollButton(false)
         })
+
+        // flatList.scrollToIndex({ animated: true, index: messages.length - 1 })
         return () => {
             unsubcribe()
         };
-    }, []);
 
+    }, []);
     useLayoutEffect(() => {
         navigation.setOptions({
             title: friendName,
@@ -156,30 +165,59 @@ const Chat = ({ route, navigation }) => {
         })
     }
 
+    const renderItem = ({ item }) => {
+        return <ChatBox message={item.message} actualUserUid={actualUserUid} sentBy={item.sentBy} sentHour={item.sentAt.hour} />
+    }
+
+    const ButtonScrollToTheEnd = () => {
+        return <>
+            {showScrollButtom ? <IconButton
+                onPress={() => {
+                    flatList.scrollToEnd({ animated: true })
+                    setShowScrollButton(false)
+                }}
+                position={'absolute'}
+                bottom={20} right={5}
+                icon={<Icon as={Entypo} name="emoji-happy" />}
+                borderRadius="full"
+                _icon={{
+                    color: "orange.500",
+                    size: "md"
+                }} _hover={{
+                    bg: "transparent"
+                }} _pressed={{
+                    bg: "transparent"
+                }} /> : null}
+        </>
+
+
+    }
+    const scrollToEndOnContentSizeChange = () => {
+        sentBy === actualUserUid ? flatList.scrollToEnd({ animated: true }) : null
+    }
+
     return (
         <View style={styles.container}>
             <FlatList
                 data={messages}
                 ref={ref => flatList = ref}
-                /* onScroll={(event) => {                    
-                    let currentOffset = event.nativeEvent.contentOffset.y;                 
-                    let direction = currentOffset > offset ? 'down' : 'up';
-                    SetOffset(currentOffset);
-                    console.log(direction); // up or down accordingly
-                }} */
-                //initialNumToRender={messages.length}
-                //onContentSizeChange={() => flatList.scrollToEnd({ animated: true })}
-                renderItem={({ item }) =>
-                    <ChatBox message={item.message} actualUserUid={actualUserUid} sentBy={item.sentBy} sentHour={item.sentAt.hour} />
-                }
-
-                /* getItemLayout={(data, index) => (
+                onScrollToTop={() => setShowScrollButton(true)}
+                onScrollBeginDrag={(event) => {
+                    let currentOffset = event.nativeEvent.contentOffset.y;
+                    console.log(currentOffset);
+                    setOffset(currentOffset)
+                    setShowScrollButton(true)
+                }}
+                initialScrollIndex={position}
+                renderItem={renderItem}
+                onContentSizeChange={() => scrollToEndOnContentSizeChange()}
+                getItemLayout={(data, index) => (
                     { length: 100, offset: 100 * index, index }
                 )}
-                initialScrollIndex={messages.length - 1} */
                 //onLayout={() => flatList.scrollToEnd({ animated: false })}
                 keyExtractor={item => item.messageId}
             />
+            <ButtonScrollToTheEnd />
             <Box ml={2} mr={2} mt={2} mb={4} bg={'white'} borderRadius={'50'}>
                 <Input
                     placeholder="Write a message..."
@@ -206,7 +244,6 @@ const Chat = ({ route, navigation }) => {
                         </>
                     }
                 />
-
             </Box>
             <Actionsheet isOpen={isOpen} onClose={onClose} hideDragIndicator>
                 <Actionsheet.Content borderTopRadius="20">

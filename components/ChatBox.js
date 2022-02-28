@@ -1,21 +1,20 @@
 import React from 'react';
 import { Box, Stack, Text, Image, HStack } from 'native-base'
 import globalStyles from '../styles/global-styles';
-import UserAvatar from './UserAvatar';
 
-const ChatBox = ({ message, sentBy, sentHour, actualUserUid, isGroupChat, userPhoto, userName }) => {
+const ChatBox = ({ message, sentBy, sentHour, actualUserUid, isGroupChat, userPhoto, userName}) => {
     const detectImages = () => {
         let pattern = /http?s?:?\/\/.*\.(?:png|jpg|jpeg|gif|png|svg|com)((\/).+)?/;
         return pattern.test(message)
     }
-
     return (
-        <Stack mb={1} w={globalStyles.windowDimensions.width} mt={2}>
+        <Stack mb={1} w={globalStyles.windowDimensions.width} mt={2} position={'relative'}>
             {sentBy === actualUserUid ?
                 <HStack alignSelf={'flex-end'}
                     alignItems={'flex-end'}
                     maxWidth={'70%'}
-                    mr={3}>
+                    mr={3}
+                >
                     <Stack bg={'#2176FF'}
                         borderTopLeftRadius={25}
                         borderTopRightRadius={25}
@@ -64,9 +63,7 @@ const ChatBox = ({ message, sentBy, sentHour, actualUserUid, isGroupChat, userPh
                         </Box>
                     </Stack>
                 </HStack>
-
             }
-
         </Stack >
     );
 };
