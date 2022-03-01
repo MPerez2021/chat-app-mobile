@@ -2,13 +2,13 @@ import React from 'react';
 import { Box, Stack, Text, Image, HStack } from 'native-base'
 import globalStyles from '../styles/global-styles';
 
-const ChatBox = ({ message, sentBy, sentHour, actualUserUid, isGroupChat, userPhoto, userName}) => {
+const ChatBox = ({ message, sentBy, sentHour, actualUserUid, isGroupChat, userPhoto, userName }) => {
     const detectImages = () => {
         let pattern = /http?s?:?\/\/.*\.(?:png|jpg|jpeg|gif|png|svg|com)((\/).+)?/;
         return pattern.test(message)
     }
     return (
-        <Stack mb={1} w={globalStyles.windowDimensions.width} mt={2} position={'relative'}>
+        <Stack mb={1} w={globalStyles.windowDimensions.width} mt={2} position={'relative'} h={'auto'} >
             {sentBy === actualUserUid ?
                 <HStack alignSelf={'flex-end'}
                     alignItems={'flex-end'}

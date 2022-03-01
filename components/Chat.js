@@ -14,6 +14,7 @@ import { Feather } from '@expo/vector-icons';
 import ChatBox from './ChatBox';
 import UserAvatar from './UserAvatar';
 import { pickImage, takePhotoWithCamera, uploadPhotoToStorage } from '../services/UploadImages';
+import ScrollToEndButton from './ScrollToEndButton';
 
 const Chat = ({ route, navigation }) => {
     const db = getFirestore()
@@ -24,17 +25,14 @@ const Chat = ({ route, navigation }) => {
     const [messages, setMessages] = React.useState([])
     const { isOpen, onOpen, onClose } = useDisclose();
     const id = actualUserUid > friendId ? `${actualUserUid + friendId}` : `${friendId + actualUserUid}`
-    const [offset, setOffset] = React.useState(0);
-    const [position, setPosition] = React.useState(0)
     const [showScrollButtom, setShowScrollButton] = React.useState(false)
     let flatList = useRef(null)
 
-    useEffect(() => {
-        const chatRef = query(collection(db, 'chats', id, 'chat'), orderBy('sentAt.date', 'asc'), orderBy('sentAt.hour', 'asc'))
+    useEffect(() => {       
+        const chatRef = query(collection(db, 'chats', id, 'chat'), orderBy('sentAt.date', 'asc'), orderBy('sentAt.hour', 'desc'))
         const unsubcribe = onSnapshot(chatRef, querySnapshot => {
             let msgs = []
             querySnapshot.forEach(data => {
-                setSentBy(data.data().sentBy)
                 let msg = {
                     messageId: data.id,
                     message: data.data().message,
@@ -47,12 +45,8 @@ const Chat = ({ route, navigation }) => {
                 }
                 msgs.push(msg)
             })
-            setPosition(msgs.length - 1)
             setMessages(msgs)
-            setShowScrollButton(false)
         })
-
-        // flatList.scrollToIndex({ animated: true, index: messages.length - 1 })
         return () => {
             unsubcribe()
         };
@@ -68,6 +62,8 @@ const Chat = ({ route, navigation }) => {
 
     async function sendMessages() {
         setMessageInputValue('')
+        /* setSentBy('')
+        setSentBy(actualUserUid) */
         if (messageInputValue !== '') {
             await addDoc(collection(db, 'chats', id, 'chat'), {
                 sentBy: actualUserUid,
@@ -78,7 +74,6 @@ const Chat = ({ route, navigation }) => {
                     hour: new Date().toLocaleTimeString([], { hour12: true })
                 }
             })
-
             await setDoc(doc(db, 'lastMessages', id), {
                 sentTo: {
                     name: friendName,
@@ -169,31 +164,14 @@ const Chat = ({ route, navigation }) => {
         return <ChatBox message={item.message} actualUserUid={actualUserUid} sentBy={item.sentBy} sentHour={item.sentAt.hour} />
     }
 
-    const ButtonScrollToTheEnd = () => {
-        return <>
-            {showScrollButtom ? <IconButton
-                onPress={() => {
-                    flatList.scrollToEnd({ animated: true })
-                    setShowScrollButton(false)
-                }}
-                position={'absolute'}
-                bottom={20} right={5}
-                icon={<Icon as={Entypo} name="emoji-happy" />}
-                borderRadius="full"
-                _icon={{
-                    color: "orange.500",
-                    size: "md"
-                }} _hover={{
-                    bg: "transparent"
-                }} _pressed={{
-                    bg: "transparent"
-                }} /> : null}
-        </>
 
 
-    }
     const scrollToEndOnContentSizeChange = () => {
-        sentBy === actualUserUid ? flatList.scrollToEnd({ animated: true }) : null
+        /* if (sentBy === actualUserUid) {
+            flatList.scrollToOffset({ animated: true, offset: 0 })
+        } */
+        flatList.scrollToOffset({ animated: true, offset: 0 })
+
     }
 
     return (
@@ -201,23 +179,25 @@ const Chat = ({ route, navigation }) => {
             <FlatList
                 data={messages}
                 ref={ref => flatList = ref}
-                onScrollToTop={() => setShowScrollButton(true)}
-                onScrollBeginDrag={(event) => {
+                inverted
+                // ListEmptyComponent={}
+                onScroll={(event) => {
                     let currentOffset = event.nativeEvent.contentOffset.y;
-                    console.log(currentOffset);
-                    setOffset(currentOffset)
-                    setShowScrollButton(true)
-                }}
-                initialScrollIndex={position}
+                    console.log(currentOffset);                   
+                    currentOffset === 0 ? setShowScrollButton(false) : setShowScrollButton(true)
+                }}                
+                // initialScrollIndex={position}
                 renderItem={renderItem}
                 onContentSizeChange={() => scrollToEndOnContentSizeChange()}
-                getItemLayout={(data, index) => (
-                    { length: 100, offset: 100 * index, index }
-                )}
                 //onLayout={() => flatList.scrollToEnd({ animated: false })}
                 keyExtractor={item => item.messageId}
             />
-            <ButtonScrollToTheEnd />
+            <ScrollToEndButton
+                showScrollButtom={showScrollButtom}
+                flatListRef={() => {
+                    flatList.scrollToOffset({ animated: false })
+                    setShowScrollButton(false)
+                }} />
             <Box ml={2} mr={2} mt={2} mb={4} bg={'white'} borderRadius={'50'}>
                 <Input
                     placeholder="Write a message..."
