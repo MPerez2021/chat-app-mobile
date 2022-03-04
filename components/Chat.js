@@ -3,7 +3,7 @@ import { View, StyleSheet, FlatList } from 'react-native'
 import { Input, Icon, Avatar, Actionsheet, useDisclose, Box, IconButton } from 'native-base'
 import globalStyles from '../styles/global-styles'
 /*FIREBASE */
-import { onSnapshot, doc, getFirestore, addDoc, collection, query, orderBy, setDoc, where, getDocs, arrayUnion } from "firebase/firestore";
+import { onSnapshot, doc, getFirestore, addDoc, collection, query, orderBy, setDoc, limit, startAfter } from "firebase/firestore";
 import { getAuth } from "firebase/auth"
 /*ICONS*/
 import { Ionicons } from '@expo/vector-icons';
@@ -15,22 +15,28 @@ import ChatBox from './ChatBox';
 import UserAvatar from './UserAvatar';
 import { pickImage, takePhotoWithCamera, uploadPhotoToStorage } from '../services/UploadImages';
 import ScrollToEndButton from './ScrollToEndButton';
+import LoadingSpinner from './LoadingSpinner';
+import NoMessagesInfo from './NoMessagesInfo';
 
 const Chat = ({ route, navigation }) => {
     const db = getFirestore()
     const auth = getAuth()
     const { friendName, friendId, actualUserUid, profilePhoto, actualUserPhoto, actualUserName } = route.params;
-    const [messageInputValue, setMessageInputValue] = React.useState('')
-    const [sentBy, setSentBy] = React.useState('')
-    const [messages, setMessages] = React.useState([])
+    const id = actualUserUid > friendId ? `${actualUserUid + friendId}` : `${friendId + actualUserUid}`;
+    const [messageInputValue, setMessageInputValue] = React.useState('');
+    const [sentBy, setSentBy] = React.useState('');
+    const [messages, setMessages] = React.useState([]);
+    const [getLastMessage, setGetLastMessage] = React.useState();
+    const [loading, setLoading] = React.useState(false);
     const { isOpen, onOpen, onClose } = useDisclose();
-    const id = actualUserUid > friendId ? `${actualUserUid + friendId}` : `${friendId + actualUserUid}`
     const [showScrollButtom, setShowScrollButton] = React.useState(false)
     let flatList = useRef(null)
-
-    useEffect(() => {       
-        const chatRef = query(collection(db, 'chats', id, 'chat'), orderBy('sentAt.date', 'asc'), orderBy('sentAt.hour', 'desc'))
+    let limitMessages = 35
+    useEffect(() => {
+        setLoading(true)
+        const chatRef = query(collection(db, 'chats', id, 'chat'), orderBy('sentAt.date', 'desc'), orderBy('sentAt.hour', 'desc'), limit(limitMessages))
         const unsubcribe = onSnapshot(chatRef, querySnapshot => {
+            setGetLastMessage(querySnapshot.docs[querySnapshot.docs.length - 1])
             let msgs = []
             querySnapshot.forEach(data => {
                 let msg = {
@@ -46,6 +52,7 @@ const Chat = ({ route, navigation }) => {
                 msgs.push(msg)
             })
             setMessages(msgs)
+            setLoading(false)
         })
         return () => {
             unsubcribe()
@@ -60,7 +67,7 @@ const Chat = ({ route, navigation }) => {
         })
     }, [navigation])
 
-    async function sendMessages() {
+    async function sendMessages(flatListRef) {
         setMessageInputValue('')
         /* setSentBy('')
         setSentBy(actualUserUid) */
@@ -73,6 +80,8 @@ const Chat = ({ route, navigation }) => {
                     date: new Date().toLocaleDateString('es', { year: '2-digit' }),
                     hour: new Date().toLocaleTimeString([], { hour12: true })
                 }
+            }).then(() => {
+                flatListRef.scrollToOffset({ animated: true })
             })
             await setDoc(doc(db, 'lastMessages', id), {
                 sentTo: {
@@ -161,7 +170,10 @@ const Chat = ({ route, navigation }) => {
     }
 
     const renderItem = ({ item }) => {
-        return <ChatBox message={item.message} actualUserUid={actualUserUid} sentBy={item.sentBy} sentHour={item.sentAt.hour} />
+        return (
+            <ChatBox message={item.message} actualUserUid={actualUserUid} sentBy={item.sentBy} sentHour={item.sentAt.hour} />
+
+        )
     }
 
 
@@ -174,23 +186,63 @@ const Chat = ({ route, navigation }) => {
 
     }
 
+    const loadMoreMessages = () => {
+        if (getLastMessage && messages.length >= limitMessages) {
+            setLoading(true)
+            const chatRef = query(collection(db, 'chats', id, 'chat'), orderBy('sentAt.date', 'desc'), orderBy('sentAt.hour', 'desc'),
+                startAfter(getLastMessage), limit(limitMessages))
+            onSnapshot(chatRef, querySnapshot => {
+                if (!querySnapshot.empty) {
+                    let msgs = messages
+                    console.log('si hay más mensajes');
+                    setGetLastMessage(querySnapshot.docs[querySnapshot.docs.length - 1])
+                    querySnapshot.forEach(data => {
+                        let msg = {
+                            messageId: data.id,
+                            message: data.data().message,
+                            recievedBy: data.data().recievedBy,
+                            sentBy: data.data().sentBy,
+                            sentAt: {
+                                date: data.data().sentAt.date,
+                                hour: data.data().sentAt.hour.replace(/(.*)\D\d+/, '$1')
+                            }
+                        }
+                        msgs.push(msg)
+                    })
+                    setMessages(msgs)
+                    setLoading(false)
+                } else {
+                    setLoading(false)
+                    setGetLastMessage(null)
+                }
+            })
+        } else {
+            setLoading(false)
+        }
+
+
+    }
+
+
     return (
         <View style={styles.container}>
             <FlatList
                 data={messages}
                 ref={ref => flatList = ref}
-                inverted
-                // ListEmptyComponent={}
+                inverted={messages.length ? true : false}
+                ListEmptyComponent={!loading ? <NoMessagesInfo /> : null}
                 onScroll={(event) => {
                     let currentOffset = event.nativeEvent.contentOffset.y;
-                    console.log(currentOffset);                   
                     currentOffset === 0 ? setShowScrollButton(false) : setShowScrollButton(true)
-                }}                
-                // initialScrollIndex={position}
+                }}
+                // initialScrollIndex={position}        
+                ListFooterComponent={<LoadingSpinner loading={loading} size={'lg'} />}
+                onEndReached={loadMoreMessages}
+                onEndReachedThreshold={0.1}
                 renderItem={renderItem}
-                onContentSizeChange={() => scrollToEndOnContentSizeChange()}
+                // onContentSizeChange={() => scrollToEndOnContentSizeChange()}
                 //onLayout={() => flatList.scrollToEnd({ animated: false })}
-                keyExtractor={item => item.messageId}
+                keyExtractor={(item, index) => String(index)}
             />
             <ScrollToEndButton
                 showScrollButtom={showScrollButtom}
@@ -219,7 +271,7 @@ const Chat = ({ route, navigation }) => {
                                 mr="3"
                                 size="6"
                                 color="muted.400"
-                                onPress={() => sendMessages()}
+                                onPress={() => sendMessages(flatList)}
                                 as={<Ionicons name="send" />} />
                         </>
                     }
