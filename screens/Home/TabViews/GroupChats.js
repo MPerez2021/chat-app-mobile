@@ -1,7 +1,8 @@
 import React, { useEffect } from 'react'
+import { useFocusEffect } from '@react-navigation/core';
 import { View, StyleSheet, TouchableHighlight, FlatList } from 'react-native'
-import { HStack, Text, Avatar, VStack, Stack, IconButton, Divider, Button, Icon } from 'native-base'
-import { onSnapshot, doc, getFirestore, addDoc, collection, query, where, updateDoc } from "firebase/firestore";
+import { HStack, Text, Avatar, VStack, Stack, IconButton, Divider, Skeleton, Spinner, Icon, Heading } from 'native-base'
+import { onSnapshot, doc, getFirestore, collection, query, where } from "firebase/firestore";
 import { getAuth } from "firebase/auth"
 import globalStyles from '../../../styles/global-styles';
 /*ICONS */
@@ -11,7 +12,9 @@ const GroupChats = ({ props }) => {
     const db = getFirestore();
     const auth = getAuth();
     const [groupChats, setgroupChats] = React.useState([])
+    const [loaded, setLoaded] = React.useState(false)
     useEffect(() => {
+        let skeletonTimer = null
         const groupRef = query(collection(db, 'groupIdUsers'), where('groupInfo.users', 'array-contains', auth.currentUser.uid))
         const unsubscribe = onSnapshot(groupRef, groups => {
             let groupChatContent = []
@@ -36,34 +39,37 @@ const GroupChats = ({ props }) => {
                 groupChatContent.push(group)
             })
             setgroupChats(groupChatContent)
+            skeletonTimer = setTimeout(() => {
+                setLoaded(true)
+            }, 3000)
         })
         return () => {
             unsubscribe();
-
+            clearTimeout(skeletonTimer);
         };
     }, [])
-
     const detectImages = (image) => {
         let pattern = /http?s?:?\/\/.*\.(?:png|jpg|jpeg|gif|png|svg|com)((\/).+)?/;
         return pattern.test(image)
     }
-    return (
-        <View style={styles.container}>
-            <FlatList data={groupChats}
-                renderItem={({ item }) =>
-                    <TouchableHighlight onPress={() => {
-                        props.navigate('GroupChatScreen', {
-                            id: item.documentId,
-                            groupName: item.groupName,
-                            createdBy: item.createdBy.name,
-                            groupImage: item.groupPhoto,
-                            groupUsers: item.users,
-                            isGroupChat: true
-                        })
-                    }}>
-                        <View>
-                            <Stack bg="white" direction={'row'} padding={4}>
-                                <Stack alignSelf={'center'} width={'15%'}>
+
+    const renderItem = ({ item }) => {
+        return (
+            <TouchableHighlight onPress={() => {
+                props.navigate('GroupChatScreen', {
+                    id: item.documentId,
+                    groupName: item.groupName,
+                    createdBy: item.createdBy.name,
+                    groupImage: item.groupPhoto,
+                    groupUsers: item.users,
+                    isGroupChat: true
+                })
+            }}>
+                <View>
+                    <Stack bg={loaded ? 'white' : null} direction={'row'} padding={4}>
+                        <Stack alignSelf={'center'} width={'15%'}>
+                            <Skeleton size={10} borderRadius={'full'} isLoaded={loaded}>
+                                <>
                                     <Avatar
                                         alignContent="center"
                                         size="md"
@@ -72,13 +78,25 @@ const GroupChats = ({ props }) => {
                                         }}
                                         mr={3}
                                     />
-                                </Stack>
-                                <VStack width={'85%'}>
-                                    <Stack justifyContent={"space-between"} direction={'row'}>
+                                </>
+                            </Skeleton>
+                        </Stack>
+                        <VStack width={'85%'}>
+                            <Stack justifyContent={"space-between"} direction={'row'}>
+                                <Skeleton.Text isLoaded={loaded} >
+                                    <>
                                         <Text fontSize="lg">{item.groupName}</Text>
+                                    </>
+                                </Skeleton.Text>
+                                <Skeleton.Text isLoaded={loaded}>
+                                    <>
                                         <Text fontSize="sm">{item.message ? item.dateSent : item.createdAt}</Text>
-                                    </Stack>
-                                    <Stack direction={'row'}>
+                                    </>
+                                </Skeleton.Text>
+                            </Stack>
+                            <Stack direction={'row'}>
+                                <Skeleton.Text w={'80%'} isLoaded={loaded} numberOfLines={1}>
+                                    <>
                                         {detectImages(item.message) ?
                                             <HStack>
                                                 <Text isTruncated fontSize="sm" maxWidth={globalStyles.windowDimensions.width} color={'muted.500'}>
@@ -99,14 +117,35 @@ const GroupChats = ({ props }) => {
 
                                             </>
                                         }
-                                    </Stack>
-                                </VStack>
+                                    </>
+                                </Skeleton.Text>
                             </Stack>
-                            <Divider />
-                        </View>
-                    </TouchableHighlight>
-                }
-                keyExtractor={item => item.documentId}
+                        </VStack>
+                    </Stack>
+                    <Divider />
+                </View>
+            </TouchableHighlight>
+        )
+    }
+
+    const LoadingSpinner = () => {
+        return (
+            <HStack space={2} justifyContent='center'>
+                <Spinner size={'lg'} color="cyan.500" />
+                <Heading color="cyan.500" fontSize="2xl">
+                    Loading...
+                </Heading>
+            </HStack>
+        )
+    }
+
+    return (
+        <View style={styles.container}>
+            <FlatList data={groupChats}
+                ListEmptyComponent={<LoadingSpinner />}
+                renderItem={renderItem}
+                contentContainerStyle={!groupChats.length ? styles.loadingSpinner : null}
+                keyExtractor={(item, index) => String(index)}
             />
 
             <IconButton
@@ -132,6 +171,9 @@ const styles = StyleSheet.create({
         height: globalStyles.windowDimensions.height,
         width: globalStyles.windowDimensions.width,
         flex: 1
+    },
+    loadingSpinner: {
+        marginTop: 'auto', marginBottom: 'auto'
     }
 
 })

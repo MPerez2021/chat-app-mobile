@@ -31,7 +31,7 @@ const Home = ({ navigation }) => {
     const renderTabBar = (props) => {
         /* props.navigationState.routes = devuelve una lista de objetos de las rutas renderizadas en
         pantalla actual */
-        const inputRange = props.navigationState.routes.map((x, position) => position);     
+        const inputRange = props.navigationState.routes.map((x, position) => position);
         return (
             <Box flexDirection="row">
                 {props.navigationState.routes.map((route, i) => {
@@ -54,7 +54,7 @@ const Home = ({ navigation }) => {
                         >
                             <Pressable
                                 onPress={() => {
-                                    console.log(i);
+                                    console.log(i);                                    
                                     setIndex(i);
                                 }}>
                                 <Animated.Text style={{ color }}>{route.title}</Animated.Text>
