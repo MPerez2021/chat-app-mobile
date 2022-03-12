@@ -8,15 +8,24 @@ import { TabView, SceneMap } from 'react-native-tab-view';
 import { MaterialIcons } from '@expo/vector-icons';
 import AllChats from './TabViews/AllChats';
 import GroupChats from './TabViews/GroupChats';
-const Home = ({ navigation }) => {
+import SearchResults from '../../components/SearchResults';
+import { GroupChatsContextProvider } from '../../components/Context/GroupChatsContext/Provider';
+import { OneToOneChatContextProvider } from '../../components/Context/OneToOneChatContext/Provider';
 
+const Home = ({ navigation }) => {
     /*    const [numberOfChats, setNumberOfChats] = React.useState(0)
        function childToParents(childData) {
            console.log(childData.length)    
        } */
-
-    const FirstRoute = () => <AllChats props={navigation}></AllChats>;
-    const SecondRoute = () => <GroupChats props={navigation}></GroupChats>;
+    const FirstRoute = () =>
+        <OneToOneChatContextProvider>
+            <AllChats props={navigation}></AllChats>
+        </OneToOneChatContextProvider>
+    const SecondRoute = () =>
+        <GroupChatsContextProvider>
+            <GroupChats props={navigation}></GroupChats>
+        </GroupChatsContextProvider>
+    const [searchStart, setSearchStart] = React.useState(false)
     const [index, setIndex] = React.useState(0);
     const [routes] = React.useState([
         { key: 'first', title: 'Chats' },
@@ -54,7 +63,7 @@ const Home = ({ navigation }) => {
                         >
                             <Pressable
                                 onPress={() => {
-                                    console.log(i);                                    
+                                    console.log(i);
                                     setIndex(i);
                                 }}>
                                 <Animated.Text style={{ color }}>{route.title}</Animated.Text>
@@ -75,6 +84,9 @@ const Home = ({ navigation }) => {
                     py="3"
                     px="1"
                     fontSize="14"
+                    onChangeText={(text) => {
+                        text ? setSearchStart(true) : setSearchStart(false)
+                    }}
                     _focus={{ borderColor: 'transparent' }}
                     InputLeftElement={
                         <Icon
@@ -97,15 +109,16 @@ const Home = ({ navigation }) => {
                 />
 
             </HStack>
-            <TabView
+            {searchStart ? <SearchResults /> : <TabView
                 navigationState={{ index, routes }}
                 renderScene={renderScene}
                 renderTabBar={renderTabBar}
                 onIndexChange={setIndex}
                 initialLayout={{ width: globalStyles.windowDimensions.width }}
-                lazy
+                //lazy
                 style={{ marginTop: StatusBar.currentHeight }}
-            />
+            />}
+
         </View>
     )
 }

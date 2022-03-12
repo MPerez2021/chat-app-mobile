@@ -1,5 +1,4 @@
-import React, { useEffect } from 'react'
-import { useFocusEffect } from '@react-navigation/core';
+import React, { useEffect, createContext, useContext } from 'react'
 import { View, StyleSheet, TouchableHighlight, FlatList } from 'react-native'
 import { HStack, Text, Avatar, VStack, Stack, IconButton, Divider, Skeleton, Spinner, Icon, Heading } from 'native-base'
 import { onSnapshot, doc, getFirestore, collection, query, where } from "firebase/firestore";
@@ -8,46 +7,51 @@ import globalStyles from '../../../styles/global-styles';
 /*ICONS */
 import { Feather } from '@expo/vector-icons';
 import { Ionicons } from '@expo/vector-icons';
+import GroupChatContext from '../../../components/Context/GroupChatsContext/createContext';
+
 const GroupChats = ({ props }) => {
-    const db = getFirestore();
-    const auth = getAuth();
-    const [groupChats, setgroupChats] = React.useState([])
-    const [loaded, setLoaded] = React.useState(false)
-    useEffect(() => {
-        let skeletonTimer = null
-        const groupRef = query(collection(db, 'groupIdUsers'), where('groupInfo.users', 'array-contains', auth.currentUser.uid))
-        const unsubscribe = onSnapshot(groupRef, groups => {
-            let groupChatContent = []
-            groups.forEach(info => {
-                let group = {
-                    documentId: info.id,
-                    groupName: info.data().groupInfo.groupName,
-                    createdBy: {
-                        name: info.data().groupInfo.createdBy.name,
-                        uid: info.data().groupInfo.createdBy.uid
-                    },
-                    createdAt: info.data().groupInfo.createdAt.date,
-                    groupPhoto: info.data().groupInfo.groupPhoto,
-                    users: info.data().groupInfo.users,
-                    message: info.data().lastMessage.message,
-                    dateSent: info.data().lastMessage.dateSent,
-                    sentBy: {
-                        uid: info.data().lastMessage.sentBy.uid,
-                        userName: info.data().lastMessage.sentBy.userName
+   
+    /* const [groupChats, setgroupChats] = React.useState([])
+    const [loaded, setLoaded] = React.useState(false) */
+    const { groupChats, loaded, auth } = useContext(GroupChatContext)
+    /* 
+        useEffect(() => {
+            let skeletonTimer = null
+            const groupRef = query(collection(db, 'groupIdUsers'), where('groupInfo.users', 'array-contains', auth.currentUser.uid))
+            const unsubscribe = onSnapshot(groupRef, groups => {
+                let groupChatContent = []
+                groups.forEach(info => {
+                    let group = {
+                        documentId: info.id,
+                        groupName: info.data().groupInfo.groupName,
+                        createdBy: {
+                            name: info.data().groupInfo.createdBy.name,
+                            uid: info.data().groupInfo.createdBy.uid
+                        },
+                        createdAt: info.data().groupInfo.createdAt.date,
+                        groupPhoto: info.data().groupInfo.groupPhoto,
+                        users: info.data().groupInfo.users,
+                        message: info.data().lastMessage.message,
+                        dateSent: info.data().lastMessage.dateSent,
+                        sentBy: {
+                            uid: info.data().lastMessage.sentBy.uid,
+                            userName: info.data().lastMessage.sentBy.userName
+                        }
                     }
-                }
-                groupChatContent.push(group)
+                    groupChatContent.push(group)
+                })
+                setgroupChats(groupChatContent)
+                skeletonTimer = setTimeout(() => {
+                    setLoaded(true)
+                }, 3000)
             })
-            setgroupChats(groupChatContent)
-            skeletonTimer = setTimeout(() => {
-                setLoaded(true)
-            }, 3000)
-        })
-        return () => {
-            unsubscribe();
-            clearTimeout(skeletonTimer);
-        };
-    }, [])
+            console.log('hola 2');
+            return () => {
+                unsubscribe();
+                clearTimeout(skeletonTimer);
+            };
+        }, []) */
+
     const detectImages = (image) => {
         let pattern = /http?s?:?\/\/.*\.(?:png|jpg|jpeg|gif|png|svg|com)((\/).+)?/;
         return pattern.test(image)
@@ -64,6 +68,7 @@ const GroupChats = ({ props }) => {
                     groupUsers: item.users,
                     isGroupChat: true
                 })
+
             }}>
                 <View>
                     <Stack bg={loaded ? 'white' : null} direction={'row'} padding={4}>
@@ -177,4 +182,4 @@ const styles = StyleSheet.create({
     }
 
 })
-export default GroupChats
+export default React.memo(GroupChats);

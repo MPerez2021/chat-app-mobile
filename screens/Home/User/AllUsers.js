@@ -83,6 +83,7 @@ const AllUsers = ({ route, navigation }) => {
                     },
                     message: '',
                     dateSent: null,
+                    hourSent: null
                 }
             })
             navigation.navigate('GroupChatScreen', {

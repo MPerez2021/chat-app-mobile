@@ -1,4 +1,3 @@
-
 import React, { useEffect, useLayoutEffect } from 'react';
 import { View, StyleSheet } from 'react-native';
 /*NATIVE BASE */
@@ -17,6 +16,7 @@ import ChatBox from './ChatBox';
 /*SERVICES */
 import { pickImage, takePhotoWithCamera, uploadPhotoToStorage } from '../services/UploadImages';
 import UserAvatar from './UserAvatar';
+
 
 const GroupChatScreen = ({ route, navigation }) => {
     const db = getFirestore()
@@ -57,7 +57,7 @@ const GroupChatScreen = ({ route, navigation }) => {
     useLayoutEffect(() => {
         navigation.setOptions({
             title: groupName,
-            headerLeft: () => <UserAvatar size='10' source={groupImage} marginRight={2} marginLeft={-5} />,
+            headerLeft: () => (<UserAvatar size='10' source={groupImage} marginRight={2} marginLeft={-5} />),
             headerBackVisible: true
         })
     }, [navigation])
@@ -86,7 +86,7 @@ const GroupChatScreen = ({ route, navigation }) => {
                     },
                     message: messageInputValue,
                     dateSent: new Date().toLocaleDateString('es', { year: '2-digit' }),
-
+                    hourSent: new Date().toLocaleTimeString([], { hour12: true })
                 }
             })
         }
@@ -118,7 +118,7 @@ const GroupChatScreen = ({ route, navigation }) => {
                     },
                     message: imageFromStorage,
                     dateSent: new Date().toLocaleDateString('es', { year: '2-digit' }),
-
+                    hourSent: new Date().toLocaleTimeString([], { hour12: true })
                 }
             })
         }
@@ -151,7 +151,7 @@ const GroupChatScreen = ({ route, navigation }) => {
                     },
                     message: imageFromStorage,
                     dateSent: new Date().toLocaleDateString('es', { year: '2-digit' }),
-
+                    hourSent: new Date().toLocaleTimeString([], { hour12: true })
                 }
             })
         }

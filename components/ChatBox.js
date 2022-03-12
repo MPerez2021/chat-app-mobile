@@ -1,6 +1,7 @@
 import React from 'react';
 import { Box, Stack, Text, Image, HStack } from 'native-base'
 import globalStyles from '../styles/global-styles';
+import UserAvatar from './UserAvatar';
 
 const ChatBox = ({ message, sentBy, sentHour, actualUserUid, isGroupChat, userPhoto, userName }) => {
     const detectImages = () => {
