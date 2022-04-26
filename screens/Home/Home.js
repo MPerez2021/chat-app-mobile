@@ -26,6 +26,7 @@ const Home = ({ navigation }) => {
             <GroupChats props={navigation}></GroupChats>
         </GroupChatsContextProvider>
     const [searchStart, setSearchStart] = React.useState(false)
+    const [searchText, setSearchText] = React.useState('')
     const [index, setIndex] = React.useState(0);
     const [routes] = React.useState([
         { key: 'first', title: 'Chats' },
@@ -85,7 +86,13 @@ const Home = ({ navigation }) => {
                     px="1"
                     fontSize="14"
                     onChangeText={(text) => {
-                        text ? setSearchStart(true) : setSearchStart(false)
+                        if (text) {
+                            setSearchText(text)
+                            setSearchStart(true)
+                        } else {
+                            setSearchStart(false)
+                            setSearchText('')
+                        }
                     }}
                     _focus={{ borderColor: 'transparent' }}
                     InputLeftElement={
@@ -109,15 +116,21 @@ const Home = ({ navigation }) => {
                 />
 
             </HStack>
-            {searchStart ? <SearchResults /> : <TabView
-                navigationState={{ index, routes }}
-                renderScene={renderScene}
-                renderTabBar={renderTabBar}
-                onIndexChange={setIndex}
-                initialLayout={{ width: globalStyles.windowDimensions.width }}
-                //lazy
-                style={{ marginTop: StatusBar.currentHeight }}
-            />}
+            {searchStart ?
+                <OneToOneChatContextProvider>
+                    <GroupChatsContextProvider>
+                        <SearchResults text={searchText} searchStart={searchStart}/>
+                    </GroupChatsContextProvider>
+                </OneToOneChatContextProvider>
+                : <TabView
+                    navigationState={{ index, routes }}
+                    renderScene={renderScene}
+                    renderTabBar={renderTabBar}
+                    onIndexChange={setIndex}
+                    initialLayout={{ width: globalStyles.windowDimensions.width }}
+                    //lazy
+                    style={{ marginTop: StatusBar.currentHeight }}
+                />}
 
         </View>
     )

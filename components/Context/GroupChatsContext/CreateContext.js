@@ -1,3 +1,3 @@
-import React, { createContext, useContext, useEffect } from 'react'
+import { createContext } from 'react'
 const GroupChatContext = createContext();
 export default GroupChatContext;

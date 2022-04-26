@@ -1,4 +1,4 @@
-import React, { useContext } from 'react'
+import React, { useContext, useEffect } from 'react'
 import { View, StyleSheet, FlatList, TouchableHighlight } from 'react-native'
 /*NATIVE BASE */
 import { HStack, Text, Avatar, VStack, Stack, Badge, Divider, IconButton, Icon, Skeleton, Spinner, Heading } from 'native-base'
@@ -18,48 +18,7 @@ const AllChats = ({ props }) => {
     const db = getFirestore();
     //const auth = getAuth();
     const { userChats, messageId, loaded, auth } = useContext(OneToOneChatContext);
-    /*   const [userChats, setUserChats] = React.useState([])
-      const [messageId, setMessageId] = React.useState('')
-      const [loaded, setLoaded] = React.useState(false)
-      useEffect(() => {
-          let skeletonTimer = null
-          const lastMessagesRef = query(collection(db, 'lastMessages'), where('id', 'array-contains', auth.currentUser.uid))
-          const unsubscribe = onSnapshot(lastMessagesRef, chats => {
-              let chatsContent = []
-              chats.forEach(info => {
-                  setMessageId(info.id)
-                  let chat = {
-                      chatId: info.id,
-                      sentBy: {
-                          name: info.data().sentBy.name,
-                          photo: info.data().sentBy.photo,
-                          uid: info.data().sentBy.uid
-                      },
-                      message: {
-                          text: info.data().message.text,
-                          dateSent: info.data().message.dateSent
-                      },
-                      sentTo: {
-                          name: info.data().sentTo.name,
-                          photo: info.data().sentTo.photo,
-                          read: info.data().sentTo.read,
-                          uid: info.data().sentTo.uid
-                      }
-                  }
-                  chatsContent.push(chat)
-              })
-              setUserChats(chatsContent)
-              skeletonTimer = setTimeout(() => {
-                  setLoaded(true)
-              }, 3000)
-          })
-          console.log('hola 1');
-          return () => {
-              unsubscribe()
-              clearTimeout(skeletonTimer)
-          };
-      }, []) */
-
+    const [checkIfUserHaveChats, setCheckIfUserHaveChats] = React.useState(false)
 
     const detectImages = (image) => {
         let pattern = /http?s?:?\/\/.*\.(?:png|jpg|jpeg|gif|png|svg|com)((\/).+)?/;
@@ -178,27 +137,40 @@ const AllChats = ({ props }) => {
         );
     }
 
-    const LoadingSpinner = () => {
+    const EmptyList = () => {
+        setTimeout(() => {
+            if (!userChats.length) {
+                setCheckIfUserHaveChats(true)
+            }
+        }, 1000);
         return (
-
-            <HStack space={2} justifyContent='center'>
-                <Spinner size={'lg'} color="cyan.500" />
-                <Heading color="cyan.500" fontSize="2xl">
-                    Loading...
-                </Heading>
+            <HStack justifyContent='center'>
+                {checkIfUserHaveChats ? <EmptyChats /> : <LoadingSpinner />}
             </HStack>
+        )
+    }
+
+    const LoadingSpinner = () => {
+        return (<HStack space={2} justifyContent='center'>
+            <Spinner size={'lg'} color="cyan.500" />
+            <Heading color="cyan.500" fontSize="2xl">
+                Loading...
+            </Heading>
+        </HStack>
         )
     }
 
     const EmptyChats = () => {
         return (
-            <Text>NO HAY CHATS</Text>
+            <HStack>
+                <Text textAlign={'center'} fontSize={20}>Aún no tienes mensajes, inicia una nueva conversación.</Text>
+            </HStack>
         )
     }
     return (
         <View style={styles.container}>
             <FlatList data={userChats}
-                ListEmptyComponent={<EmptyChats />}
+                ListEmptyComponent={<EmptyList />}
                 renderItem={renderItem}
                 contentContainerStyle={!userChats.length ? styles.loadingSpinner : null}
                 keyExtractor={(item, index) => String(index)}
@@ -230,7 +202,6 @@ const styles = StyleSheet.create({
     loadingSpinner: {
         marginTop: 'auto', marginBottom: 'auto'
     }
-
 })
 /*React memo se usa para optmizar el renderizado, comparando los props 
 del renderizado actual con el anterior, si son iguales reutiliza y si no lo

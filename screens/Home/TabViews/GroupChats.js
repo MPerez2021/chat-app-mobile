@@ -7,50 +7,12 @@ import globalStyles from '../../../styles/global-styles';
 /*ICONS */
 import { Feather } from '@expo/vector-icons';
 import { Ionicons } from '@expo/vector-icons';
-import GroupChatContext from '../../../components/Context/GroupChatsContext/createContext';
+import GroupChatContext from '../../../components/Context/GroupChatsContext/CreateContext';
 
 const GroupChats = ({ props }) => {
-   
-    /* const [groupChats, setgroupChats] = React.useState([])
-    const [loaded, setLoaded] = React.useState(false) */
+
     const { groupChats, loaded, auth } = useContext(GroupChatContext)
-    /* 
-        useEffect(() => {
-            let skeletonTimer = null
-            const groupRef = query(collection(db, 'groupIdUsers'), where('groupInfo.users', 'array-contains', auth.currentUser.uid))
-            const unsubscribe = onSnapshot(groupRef, groups => {
-                let groupChatContent = []
-                groups.forEach(info => {
-                    let group = {
-                        documentId: info.id,
-                        groupName: info.data().groupInfo.groupName,
-                        createdBy: {
-                            name: info.data().groupInfo.createdBy.name,
-                            uid: info.data().groupInfo.createdBy.uid
-                        },
-                        createdAt: info.data().groupInfo.createdAt.date,
-                        groupPhoto: info.data().groupInfo.groupPhoto,
-                        users: info.data().groupInfo.users,
-                        message: info.data().lastMessage.message,
-                        dateSent: info.data().lastMessage.dateSent,
-                        sentBy: {
-                            uid: info.data().lastMessage.sentBy.uid,
-                            userName: info.data().lastMessage.sentBy.userName
-                        }
-                    }
-                    groupChatContent.push(group)
-                })
-                setgroupChats(groupChatContent)
-                skeletonTimer = setTimeout(() => {
-                    setLoaded(true)
-                }, 3000)
-            })
-            console.log('hola 2');
-            return () => {
-                unsubscribe();
-                clearTimeout(skeletonTimer);
-            };
-        }, []) */
+    const [checkIfUserHaveChats, setCheckIfUserHaveChats] = React.useState(false)
 
     const detectImages = (image) => {
         let pattern = /http?s?:?\/\/.*\.(?:png|jpg|jpeg|gif|png|svg|com)((\/).+)?/;
@@ -133,13 +95,33 @@ const GroupChats = ({ props }) => {
         )
     }
 
-    const LoadingSpinner = () => {
+    const EmptyList = () => {
+        setTimeout(() => {
+            if (!groupChats.length) {
+                setCheckIfUserHaveChats(true)
+            }
+        }, 1000);
         return (
-            <HStack space={2} justifyContent='center'>
-                <Spinner size={'lg'} color="cyan.500" />
-                <Heading color="cyan.500" fontSize="2xl">
-                    Loading...
-                </Heading>
+            <HStack justifyContent='center'>
+                {checkIfUserHaveChats ? <EmptyChats /> : <LoadingSpinner />}
+            </HStack>
+        )
+    }
+
+    const LoadingSpinner = () => {
+        return (<HStack space={2} justifyContent='center'>
+            <Spinner size={'lg'} color="cyan.500" />
+            <Heading color="cyan.500" fontSize="2xl">
+                Loading...
+            </Heading>
+        </HStack>
+        )
+    }
+
+    const EmptyChats = () => {
+        return (
+            <HStack>
+                <Text textAlign={'center'} fontSize={20}>Aún no formas parte de un grupo, crea un nuevo grupo con tus amigos.</Text>
             </HStack>
         )
     }
@@ -147,7 +129,7 @@ const GroupChats = ({ props }) => {
     return (
         <View style={styles.container}>
             <FlatList data={groupChats}
-                ListEmptyComponent={<LoadingSpinner />}
+                ListEmptyComponent={<EmptyList />}
                 renderItem={renderItem}
                 contentContainerStyle={!groupChats.length ? styles.loadingSpinner : null}
                 keyExtractor={(item, index) => String(index)}

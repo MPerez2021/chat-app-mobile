@@ -1,7 +1,7 @@
 import React, { useContext, useEffect } from 'react'
 import { onSnapshot, doc, getFirestore, collection, query, where, orderBy } from "firebase/firestore";
 import { getAuth } from "firebase/auth"
-import GroupChatContext from './createContext';
+import GroupChatContext from './CreateContext';
 
 export function GroupChatsContextProvider({ children }) {
     const db = getFirestore();
